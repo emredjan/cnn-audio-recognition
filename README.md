@@ -1,1 +1,2 @@
-Generate music using LSTMs and MusicNet dataset.
+Audio to midi conversion using deep learning and google nsynth dataset
+
