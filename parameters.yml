@@ -1,3 +1,11 @@
 file_locations:
+  nsynth_train_audio: data/nsynth-train/audio
+  nsynth_test_audio: data/nsynth-test/audio
+  nsynth_valid_audio: data/nsynth-valid/audio
+  features_dir: data/features
 nsynth:
   sample_rate: 16000
+  max_seconds: 3
+runtime_parameters:
+  librosa_spec_windows: 50
+  librosa_hop_length: 512
