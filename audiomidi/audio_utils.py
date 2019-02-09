@@ -63,7 +63,8 @@ def process_files(audio_dir: Path,
                   max_files: int = None,
                   calc_chroma_stft=True,
                   calc_mfcc_stft=True,
-                  calc_mfcc=True):
+                  calc_mfcc=True,
+                  label: str = None):
 
     file_list = list(audio_dir.glob('*.wav'))
 
@@ -84,7 +85,8 @@ def process_files(audio_dir: Path,
                            t)) if calc_mfcc_stft else None
     mfccs = np.empty((num_files, window_size, t)) if calc_mfcc else None
 
-    with click.progressbar(file_list, label='Processing files') as bar:
+    p_label = 'Processing ' + label + ' files'
+    with click.progressbar(file_list, label=p_label) as bar:
 
         for i, f in enumerate(bar, 1):
             try:
