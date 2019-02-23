@@ -3,9 +3,24 @@ file_locations:
   nsynth_test_audio: data/nsynth-test/audio
   nsynth_valid_audio: data/nsynth-valid/audio
   features_dir: data/features
+  train_data_path: data/features/train_chroma_stft.joblib
+  valid_data_path: data/features/valid_chroma_stft.joblib
+  test_data_path: data/features/test_chroma_stft.joblib
+  train_names_path: data/features/train_name.joblib
+  valid_names_path: data/features/valid_name.joblib
+  test_names_path: data/features/test_name.joblib
+  train_metadata_path: data/nsynth-train/examples.json
+  valid_metadata_path: data/nsynth-valid/examples.json
+  test_metadata_path: data/nsynth-test/examples.json
+  weights_dir: data/weights
+  log_dir: data/logs
 nsynth:
   sample_rate: 16000
   max_seconds: 3
 runtime_parameters:
   librosa_spec_windows: 50
   librosa_hop_length: 512
+training_parameters:
+  epochs: 200
+  batch_size: 256
+  weight_file_pattern: weights-improvement-{epoch:02d}-{loss:.4f}-bigger.hdf5
