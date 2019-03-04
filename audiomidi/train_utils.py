@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Tuple
 
 import click
 import joblib
@@ -30,25 +31,27 @@ def encode_classes(metadata_paths):
     return encoder
 
 
-def prepare_data(data_path, names_path, metadata_path, encoder):
+def prepare_data(data_path: Path, names_path: Path, metadata_path: Path,
+                 encoder: LabelEncoder) -> Tuple[np.ndarray, np.ndarray]:
 
-    data = joblib.load(data_path)
-    names = joblib.load(names_path)
-    metadata = pd.read_json(metadata_path, orient='index')
+    data: np.ndarray = joblib.load(data_path)
+    names: np.ndarray = joblib.load(names_path)
+    metadata: pd.DataFrame = pd.read_json(metadata_path, orient='index')
 
     df = pd.DataFrame({}, index=names).merge(
         metadata, how='left', left_index=True, right_index=True)
     #target = df['instrument_family_str'] + '_' + df['pitch'].astype('str')
-    target = df['pitch']
-    target_enc = encoder.transform(target)
+    target: pd.Series = df['pitch']
+    target_enc: np.ndarray = encoder.transform(target)
 
-    X = data.reshape(data.shape + (1, ))
-    y = to_categorical(target_enc, len(encoder.classes_))
+    X: np.ndarray = data.reshape(data.shape + (1, ))
+    y: np.ndarray = to_categorical(target_enc, len(encoder.classes_))
 
     return X, y
 
 
-def build_model_old(input_shape, num_classes):
+def build_model_old(input_shape: Tuple[int, ...],
+                    num_classes: int) -> Sequential:
 
     model = Sequential()
     model.add(

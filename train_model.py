@@ -1,5 +1,9 @@
+from pathlib import Path
+from typing import Tuple
+
 import click
 import joblib
+from sklearn.preprocessing import LabelEncoder
 
 from audiomidi import params, train_utils
 
@@ -14,7 +18,7 @@ def encoder_export():
     click.secho('Encoding classes..', fg='bright_white')
     encoder = train_utils.encode_classes(metadata_paths)
 
-    file_out = params.features_dir / 'label_encoder.joblib'
+    file_out: Path = params.features_dir / 'label_encoder.joblib'
 
     joblib.dump(encoder, file_out)
 
@@ -25,7 +29,7 @@ def main():
 
     click.secho('Loading encoded classes..', fg='bright_white')
     encoder_file = params.features_dir / 'label_encoder.joblib'
-    encoder = joblib.load(encoder_file)
+    encoder: LabelEncoder = joblib.load(encoder_file)
 
     click.secho('Loading training data..', fg='bright_white')
     X_train, y_train = train_utils.prepare_data(
@@ -42,8 +46,8 @@ def main():
         params.test_data_path, params.test_names_path,
         params.test_metadata_path, encoder)
 
-    num_classes = len(encoder.classes_)
-    input_shape = X_train[0].shape
+    num_classes: int = len(encoder.classes_)
+    input_shape: Tuple[int, ...] = X_train[0].shape
 
     model = train_utils.build_model(input_shape, num_classes)
     callbacks = train_utils.prepare_training()
