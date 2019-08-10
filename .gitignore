@@ -116,5 +116,4 @@ data/
 temp/
 weights/
 logs/
-playground.ipynb
-training.ipynb
+*.ipynb

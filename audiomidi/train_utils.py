@@ -10,6 +10,8 @@ from keras.layers import (Activation, Conv2D, Dense, Dropout, Flatten,
                           MaxPooling2D)
 from keras.models import Sequential
 from keras.utils import normalize, to_categorical
+from keras.regularizers import l2
+from keras.optimizers import RMSprop, Adam
 from sklearn.preprocessing import LabelEncoder
 
 from audiomidi import params
@@ -79,32 +81,46 @@ def build_model(input_shape, num_classes):
     model = Sequential()
     model.add(
         Conv2D(
-            32, (3, 3),
+            64, (3, 3),
             padding='same',
             activation='relu',
+            kernel_regularizer=l2(0.001),
             input_shape=input_shape))
-    model.add(Conv2D(32, (3, 3), activation='relu'))
+    model.add(
+        Conv2D(64, (3, 3), activation='relu', kernel_regularizer=l2(0.001)))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
 
-    model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(
+        Conv2D(
+            128, (3, 3),
+            padding='same',
+            activation='relu',
+            kernel_regularizer=l2(0.001)))
+    model.add(Conv2D(128, (3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
 
-    model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(
+        Conv2D(
+            128, (3, 3),
+            padding='same',
+            activation='relu',
+            kernel_regularizer=l2(0.001)))
+    model.add(Conv2D(128, (3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
 
     model.add(Flatten())
-    model.add(Dense(512, activation='relu'))
+    model.add(Dense(1024, activation='relu'))
     model.add(Dropout(0.5))
     model.add(Dense(num_classes, activation='softmax'))
 
+    opt = Adam(lr=1e-4, decay=1e-4 / params.epochs)
+
     model.compile(
         loss='categorical_crossentropy',
-        optimizer='rmsprop',
+        optimizer=opt,
         metrics=['accuracy'])
 
     return model
