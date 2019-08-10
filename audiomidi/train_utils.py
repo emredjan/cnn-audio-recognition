@@ -131,7 +131,7 @@ def prepare_training():
     weights_file = str(params.weights_dir) + '/' + params.weight_file_pattern
     checkpoint = ModelCheckpoint(weights_file, save_best_only=True)
 
-    earlystopping = EarlyStopping(patience=5)
+    earlystopping = EarlyStopping(patience=params.early_stop)
 
     log_dir = params.log_dir
     try:

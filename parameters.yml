@@ -23,4 +23,5 @@ runtime_parameters:
 training_parameters:
   epochs: 200
   batch_size: 256
+  early_stop: 5
   weight_file_pattern: weights-improvement-{epoch:02d}-{loss:.4f}-bigger.hdf5

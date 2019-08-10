@@ -41,10 +41,10 @@ def main():
         params.valid_data_path, params.valid_names_path,
         params.valid_metadata_path, encoder)
 
-    click.secho('Loading test data..', fg='bright_white')
-    X_test, y_test = train_utils.prepare_data(
-        params.test_data_path, params.test_names_path,
-        params.test_metadata_path, encoder)
+    # click.secho('Loading test data..', fg='bright_white')
+    # X_test, y_test = train_utils.prepare_data(
+    #     params.test_data_path, params.test_names_path,
+    #     params.test_metadata_path, encoder)
 
     num_classes: int = len(encoder.classes_)
     input_shape: Tuple[int, ...] = X_train[0].shape
@@ -52,7 +52,7 @@ def main():
     model = train_utils.build_model(input_shape, num_classes)
     callbacks = train_utils.prepare_training()
 
-    fitted_model = train_utils.train_model(model, X_train, y_train, X_valid,
+    _ = train_utils.train_model(model, X_train, y_train, X_valid,
                                            y_valid, callbacks)
 
 
