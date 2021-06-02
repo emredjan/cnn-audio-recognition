@@ -123,9 +123,12 @@ def process_files(
 
     for i, r in enumerate(results):
         names[i] = r[0]
-        chroma_stfts[i] = r[1]
-        mfcc_stfts[i] = r[2]
-        mfccs[i] = r[3]
+        if calc_chroma_stft:
+            chroma_stfts[i] = r[1]
+        if calc_mfcc_stft:
+            mfcc_stfts[i] = r[2]
+        if calc_mfcc:
+            mfccs[i] = r[3]
 
     return (names, chroma_stfts, mfcc_stfts, mfccs)
 
