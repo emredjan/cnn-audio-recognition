@@ -4,6 +4,7 @@ from typing import Tuple
 import click
 import joblib
 from sklearn.preprocessing import LabelEncoder
+from tensorflow.python.client import device_lib
 
 from audiomidi import params, train_utils
 
@@ -27,6 +28,18 @@ def encoder_export():
 @click.command()
 @click.option('--enc', is_flag=True)
 def main(enc):
+
+
+    devices = {dev.device_type: dev.physical_device_desc for dev in device_lib.list_local_devices()}
+
+    if 'GPU' in devices.keys():
+        click.secho('Tensorflow: GPU available, will use the following device for calculation:', fg='bright_green')
+        click.secho('\t' + devices.get('GPU'), fg='bright_green')
+    elif 'CPU' in devices.keys():
+        click.secho('Tensorflow: Only CPU available, no GPU calculation possible.', fg='bright_yellow')
+    else:
+        click.secho('Tensorflow: No compatible device found, exiting.', fg='bright_red')
+        return
 
     if enc:
         encoder_export()
