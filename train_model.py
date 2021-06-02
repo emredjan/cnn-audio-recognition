@@ -25,7 +25,11 @@ def encoder_export():
 
 
 @click.command()
-def main():
+@click.option('--enc', is_flag=True)
+def main(enc):
+
+    if enc:
+        encoder_export()
 
     click.secho('Loading encoded classes..', fg='bright_white')
     encoder_file = params.features_dir / 'label_encoder.joblib'
@@ -57,4 +61,6 @@ def main():
 
 
 if __name__ == "__main__":
+
+
     main()
