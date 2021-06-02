@@ -5,6 +5,9 @@ import click
 
 from audiomidi import audio_utils, params
 
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 warnings.filterwarnings(action='ignore', category=UserWarning)
 
 
