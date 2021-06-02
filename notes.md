@@ -16,7 +16,7 @@ $env:TF_CPP_MIN_LOG_LEVEL=2
 Install CUDA (same version as conda installed), find `cupti64_*.dll` in `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.1\extras\CUPTI\lib64`, copy to `<conda env base dir>\Library\bin`
 
 From stackoverflow:
-> On Nvidia Control Panel, there is a Developer-Manage GPU Performance Counters section. Default toggle is to limit access to GPU preformance counters to admin users only. But you must select 'Allow acces to the GPU prformance counters to all users'. Once toggled, access permissions to the cupti dll are resolved. –
+> On Nvidia Control Panel, there is a Developer / Manage GPU Performance Counters section. Default toggle is to limit access to GPU preformance counters to admin users only. But you must select 'Allow acces to the GPU prformance counters to all users'. Once toggled, access permissions to the cupti dll are resolved. –
 
 
 ## Check if GPU available to Tensorflow:
