@@ -1,5 +1,7 @@
 import warnings
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from functools import partial
 
 import click
 import joblib
@@ -84,6 +86,83 @@ def process_files(
     calc_chroma_stft=True,
     calc_mfcc_stft=True,
     calc_mfcc=True,
+    label: str = '',
+    max_workers: int = 12
+):
+
+    file_list = list(audio_dir.glob('*.wav'))
+
+    if max_files:
+        file_list = file_list[:max_files]
+
+    num_files = len(file_list)
+
+    window_size = params.librosa_spec_windows
+    hop_length = params.librosa_hop_length
+    frame_size = params.nsynth_max_seconds * params.nsynth_sr
+    t = int(round(frame_size / hop_length, 0))
+
+    names = np.empty((num_files,), dtype=object)
+    chroma_stfts = np.empty((num_files, window_size, t)) if calc_chroma_stft else None
+    mfcc_stfts = np.empty((num_files, window_size, t)) if calc_mfcc_stft else None
+    mfccs = np.empty((num_files, window_size, t)) if calc_mfcc else None
+
+    p_label = 'Processing ' + label + ' files'
+
+    process_file_ = partial(
+        process_single_file,
+        calc_chroma_stft=calc_chroma_stft,
+        calc_mfcc_stft=calc_mfcc_stft,
+        calc_mfcc=calc_mfcc,
+    )
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        results = executor.map(process_file_, file_list)
+
+    for i, r in enumerate(results):
+        names[i] = r[0]
+        chroma_stfts[i] = r[1]
+        mfcc_stfts[i] = r[2]
+        mfccs[i] = r[3]
+
+    return (names, chroma_stfts, mfcc_stfts, mfccs)
+
+
+def process_single_file(
+    audio_file: Path, calc_chroma_stft=True, calc_mfcc_stft=True, calc_mfcc=True
+):
+
+    window_size = params.librosa_spec_windows
+    hop_length = params.librosa_hop_length
+    frame_size = params.nsynth_max_seconds * params.nsynth_sr
+    t = int(round(frame_size / hop_length, 0))
+
+    try:
+        chroma_stft, mfcc_stft, mfcc = extract_features(
+            audio_file,
+            calc_chroma_stft=calc_chroma_stft,
+            calc_mfcc_stft=calc_mfcc_stft,
+            calc_mfcc=calc_mfcc,
+        )
+    except:
+        print(audio_file.stem, 'has errors')
+
+    return (audio_file.stem, chroma_stft, mfcc_stft, mfcc)
+
+
+def dump_to_file(obj, name: str, dir: Path):
+
+    file_name = dir / (name + '.joblib')
+
+    return joblib.dump(obj, file_name, compress=3)
+
+
+def process_files_old(
+    audio_dir: Path,
+    max_files: int = None,
+    calc_chroma_stft=True,
+    calc_mfcc_stft=True,
+    calc_mfcc=True,
     label: str = None,
 ):
 
@@ -137,10 +216,3 @@ def process_files(
             #    print('Processed all', i, 'files')
 
     return (names, chroma_stfts, mfcc_stfts, mfccs)
-
-
-def dump_to_file(obj, name: str, dir: Path):
-
-    file_name = dir / (name + '.joblib')
-
-    return joblib.dump(obj, file_name, compress=3)
