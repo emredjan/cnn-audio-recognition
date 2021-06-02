@@ -2,6 +2,7 @@ import warnings
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from functools import partial
+from tqdm import tqdm
 
 import click
 import joblib
@@ -107,7 +108,7 @@ def process_files(
     mfcc_stfts = np.empty((num_files, window_size, t)) if calc_mfcc_stft else None
     mfccs = np.empty((num_files, window_size, t)) if calc_mfcc else None
 
-    p_label = 'Processing ' + label + ' files'
+    click.secho('Processing ' + label + ' files', fg='bright_white')
 
     process_file_ = partial(
         process_single_file,
@@ -117,7 +118,8 @@ def process_files(
     )
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        results = executor.map(process_file_, file_list)
+        results = list(tqdm(executor.map(process_file_, file_list), total=num_files))
+        #results = executor.map(process_file_, file_list)
 
     for i, r in enumerate(results):
         names[i] = r[0]
