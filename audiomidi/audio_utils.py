@@ -81,7 +81,7 @@ def extract_features(
     return (chroma_stft, mfcc_stft, mfcc)
 
 
-def process_files(
+def process_filesX(
     audio_dir: Path,
     max_files: int = None,
     calc_chroma_stft=True,
@@ -137,11 +137,6 @@ def process_single_file(
     audio_file: Path, calc_chroma_stft=True, calc_mfcc_stft=True, calc_mfcc=True
 ):
 
-    window_size = params.librosa_spec_windows
-    hop_length = params.librosa_hop_length
-    frame_size = params.nsynth_max_seconds * params.nsynth_sr
-    t = int(round(frame_size / hop_length, 0))
-
     try:
         chroma_stft, mfcc_stft, mfcc = extract_features(
             audio_file,
@@ -162,7 +157,7 @@ def dump_to_file(obj, name: str, dir: Path):
     return joblib.dump(obj, file_name, compress=3)
 
 
-def process_files_old(
+def process_files(
     audio_dir: Path,
     max_files: int = None,
     calc_chroma_stft=True,
@@ -191,33 +186,22 @@ def process_files_old(
     p_label = 'Processing ' + label + ' files'
     with click.progressbar(file_list, label=p_label) as bar:
 
-        for i, f in enumerate(bar, 1):
-            try:
-                chroma_stft, mfcc_stft, mfcc = extract_features(
+        for i, f in enumerate(bar):
+
+            name, chroma_stft, mfcc_stft, mfcc = process_single_file(
                     f,
                     calc_chroma_stft=calc_chroma_stft,
                     calc_mfcc_stft=calc_mfcc_stft,
                     calc_mfcc=calc_mfcc,
                 )
-            except:
-                print(f.stem, 'has errors')
-                continue
 
-            idx = i - 1
-
-            names[idx] = f.stem
+            names[i] = name
 
             if calc_chroma_stft:
-                chroma_stfts[idx] = chroma_stft
+                chroma_stfts[i] = chroma_stft
             if calc_mfcc_stft:
-                mfcc_stfts[idx] = mfcc_stft
+                mfcc_stfts[i] = mfcc_stft
             if calc_mfcc:
-                mfccs[idx] = mfcc
-
-            # if i % 500 == 0:
-            #    print('Processed', i, '/', num_files, 'files')
-
-            # if i == num_files:
-            #    print('Processed all', i, 'files')
+                mfccs[i] = mfcc
 
     return (names, chroma_stfts, mfcc_stfts, mfccs)
