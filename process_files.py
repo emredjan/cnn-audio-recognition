@@ -16,6 +16,7 @@ warnings.filterwarnings(action='ignore', category=UserWarning)
 def main(max_files):
 
     output_dir = params.features_dir
+    output_dir.mkdir(exist_ok=True, parents=True)
 
     # process training files
 
@@ -28,11 +29,11 @@ def main(max_files):
 
     for d, d_name in zip(dirs, dir_names):
 
-        names, chroma_stfts, _, _ = audio_utils.process_files(
+        names, chroma_stfts, mfcc_stfts, _ = audio_utils.process_files(
             d,
             max_files=max_files,
             calc_chroma_stft=True,
-            calc_mfcc_stft=False,
+            calc_mfcc_stft=True,
             calc_mfcc=False,
             label=d_name)
 
@@ -47,6 +48,12 @@ def main(max_files):
 
         if not Path(chroma_stft_file[0]).exists():
             print('Error writing chroma_stft_train')
+
+        mfcc_stft_file = audio_utils.dump_to_file(
+            mfcc_stfts, d_name + '_mfcc_stft', output_dir)
+
+        if not Path(mfcc_stft_file[0]).exists():
+            print('Error writing mfcc_stft_train')
 
 
 if __name__ == "__main__":

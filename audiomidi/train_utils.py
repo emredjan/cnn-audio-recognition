@@ -30,8 +30,8 @@ def encode_classes(metadata_paths):
     for mdp in metadata_paths[1:]:
         df = df.append(pd.read_json(mdp, orient='index'))
 
-    # target = df['instrument_family_str'] + '_' + df['pitch'].astype('str')
-    target = df['pitch']
+    target = df['instrument_family_str'] + '_' + df['pitch'].astype('str')
+    # target = df['pitch']
 
     encoder = LabelEncoder()
     encoder.fit(target)
@@ -50,8 +50,8 @@ def prepare_data(
     df = pd.DataFrame({}, index=names).merge(
         metadata, how='left', left_index=True, right_index=True
     )
-    # target = df['instrument_family_str'] + '_' + df['pitch'].astype('str')
-    target: pd.Series = df['pitch']
+    target = df['instrument_family_str'] + '_' + df['pitch'].astype('str')
+    # target: pd.Series = df['pitch']
     target_enc: np.ndarray = encoder.transform(target)
 
     X: np.ndarray = data.reshape(data.shape + (1,))
