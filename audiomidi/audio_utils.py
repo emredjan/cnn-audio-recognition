@@ -169,7 +169,8 @@ def process_files(
     file_list = list(audio_dir.glob('*.wav'))
 
     if max_files:
-        file_list = file_list[:max_files]
+        import random
+        file_list = random.sample(file_list, max_files)
 
     num_files = len(file_list)
 
