@@ -81,56 +81,56 @@ def extract_features(
     return (chroma_stft, mfcc_stft, mfcc)
 
 
-def process_filesX(
-    audio_dir: Path,
-    max_files: int = None,
-    calc_chroma_stft=True,
-    calc_mfcc_stft=True,
-    calc_mfcc=True,
-    label: str = '',
-    max_workers: int = 12
-):
+# def process_filesX(
+#     audio_dir: Path,
+#     max_files: int = None,
+#     calc_chroma_stft=True,
+#     calc_mfcc_stft=True,
+#     calc_mfcc=True,
+#     label: str = '',
+#     max_workers: int = 12
+# ):
 
-    file_list = list(audio_dir.glob('*.wav'))
+#     file_list = list(audio_dir.glob('*.wav'))
 
-    if max_files:
-        file_list = file_list[:max_files]
+#     if max_files:
+#         file_list = file_list[:max_files]
 
-    num_files = len(file_list)
+#     num_files = len(file_list)
 
-    window_size = params.librosa_spec_windows
-    hop_length = params.librosa_hop_length
-    frame_size = params.nsynth_max_seconds * params.nsynth_sr
-    t = int(round(frame_size / hop_length, 0))
+#     window_size = params.librosa_spec_windows
+#     hop_length = params.librosa_hop_length
+#     frame_size = params.nsynth_max_seconds * params.nsynth_sr
+#     t = int(round(frame_size / hop_length, 0))
 
-    names = np.empty((num_files,), dtype=object)
-    chroma_stfts = np.empty((num_files, window_size, t)) if calc_chroma_stft else None
-    mfcc_stfts = np.empty((num_files, window_size, t)) if calc_mfcc_stft else None
-    mfccs = np.empty((num_files, window_size, t)) if calc_mfcc else None
+#     names = np.empty((num_files,), dtype=object)
+#     chroma_stfts = np.empty((num_files, window_size, t)) if calc_chroma_stft else None
+#     mfcc_stfts = np.empty((num_files, window_size, t)) if calc_mfcc_stft else None
+#     mfccs = np.empty((num_files, window_size, t)) if calc_mfcc else None
 
-    click.secho('Processing ' + label + ' files', fg='bright_white')
+#     click.secho('Processing ' + label + ' files', fg='bright_white')
 
-    process_file_ = partial(
-        process_single_file,
-        calc_chroma_stft=calc_chroma_stft,
-        calc_mfcc_stft=calc_mfcc_stft,
-        calc_mfcc=calc_mfcc,
-    )
+#     process_file_ = partial(
+#         process_single_file,
+#         calc_chroma_stft=calc_chroma_stft,
+#         calc_mfcc_stft=calc_mfcc_stft,
+#         calc_mfcc=calc_mfcc,
+#     )
 
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        results = list(tqdm(executor.map(process_file_, file_list), total=num_files))
-        #results = executor.map(process_file_, file_list)
+#     with ThreadPoolExecutor(max_workers=max_workers) as executor:
+#         results = list(tqdm(executor.map(process_file_, file_list), total=num_files))
+#         #results = executor.map(process_file_, file_list)
 
-    for i, r in enumerate(results):
-        names[i] = r[0]
-        if calc_chroma_stft:
-            chroma_stfts[i] = r[1]
-        if calc_mfcc_stft:
-            mfcc_stfts[i] = r[2]
-        if calc_mfcc:
-            mfccs[i] = r[3]
+#     for i, r in enumerate(results):
+#         names[i] = r[0]
+#         if calc_chroma_stft:
+#             chroma_stfts[i] = r[1]
+#         if calc_mfcc_stft:
+#             mfcc_stfts[i] = r[2]
+#         if calc_mfcc:
+#             mfccs[i] = r[3]
 
-    return (names, chroma_stfts, mfcc_stfts, mfccs)
+#     return (names, chroma_stfts, mfcc_stfts, mfccs)
 
 
 def process_single_file(
