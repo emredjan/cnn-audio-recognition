@@ -1,3 +1,4 @@
+from typing import Union
 import warnings
 from pathlib import Path
 
@@ -13,7 +14,7 @@ warnings.filterwarnings(action='ignore', category=UserWarning)
 
 @click.command()
 @click.option('-m', '--max-files', default=None, type=int)
-def main(max_files):
+def main(max_files: Union[int, None]):
 
     output_dir = params.features_dir
     output_dir.mkdir(exist_ok=True, parents=True)
@@ -57,4 +58,4 @@ def main(max_files):
 
 
 if __name__ == "__main__":
-    main()  #pylint: disable=E1120
+    main()
