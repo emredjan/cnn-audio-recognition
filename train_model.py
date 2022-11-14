@@ -4,7 +4,7 @@ from typing import Tuple
 import click
 import joblib
 from sklearn.preprocessing import LabelEncoder
-from tensorflow.python.client import device_lib
+from tensorflow.python.client import device_lib  # type: ignore
 
 from audiomidi import params, train_utils
 
@@ -34,7 +34,7 @@ def main(enc):
 
     if 'GPU' in devices.keys():
         click.secho('Tensorflow: GPU available, will use the following device for calculation:', fg='bright_green')
-        click.secho('\t' + devices.get('GPU'), fg='bright_green')
+        click.secho('\t' + (devices.get('GPU') or ''), fg='bright_green')
     elif 'CPU' in devices.keys():
         click.secho('Tensorflow: Only CPU available, no GPU calculation possible.', fg='bright_yellow')
     else:

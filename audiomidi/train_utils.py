@@ -5,8 +5,8 @@ import click
 import joblib
 import numpy as np
 import pandas as pd
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
-from tensorflow.keras.layers import (
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard  # type: ignore
+from tensorflow.keras.layers import (  # type: ignore
     Activation,
     Conv2D,
     Dense,
@@ -14,10 +14,10 @@ from tensorflow.keras.layers import (
     Flatten,
     MaxPooling2D,
 )
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.utils import normalize, to_categorical
-from tensorflow.keras.regularizers import l2
-from tensorflow.keras.optimizers import RMSprop, Adam
+from tensorflow.keras.models import Sequential  # type: ignore
+from tensorflow.keras.utils import normalize, to_categorical  # type: ignore
+from tensorflow.keras.regularizers import l2  # type: ignore
+from tensorflow.keras.optimizers import RMSprop, Adam  # type: ignore
 from sklearn.preprocessing import LabelEncoder
 
 from audiomidi import params
@@ -52,7 +52,7 @@ def prepare_data(
     )
     target = df['instrument_family_str'] + '_' + df['pitch'].astype('str')
     # target: pd.Series = df['pitch']
-    target_enc: np.ndarray = encoder.transform(target)
+    target_enc: np.ndarray = encoder.transform(target)  # type: ignore
 
     X: np.ndarray = data.reshape(data.shape + (1,))
     y: np.ndarray = to_categorical(target_enc, len(encoder.classes_))

@@ -7,6 +7,7 @@ with open('parameters.yml', 'r') as stream:
         p = yaml.load(stream, Loader=yaml.FullLoader)
     except yaml.YAMLError as exc:
         print('Error parsing YAML parameters file.')
+        p = {}
 
 # file locations
 fl = p['file_locations']

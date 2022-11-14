@@ -1,3 +1,4 @@
+from typing import Union
 import warnings
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
@@ -18,7 +19,7 @@ warnings.filterwarnings(action='ignore', category=UserWarning)
 def plot_recording(
     audio_data: np.ndarray,
     sample_rate: int = params.nsynth_sr,
-    seconds: int = None,
+    seconds: Union[int, None] = None,
     figwidth: int = 20,
     figheight: int = 2,
 ) -> None:
@@ -46,7 +47,7 @@ def extract_features(
     calc_mfcc=True,
 ):
 
-    audio_data, sr = librosa.load(audio_file, sr=None)
+    audio_data, sr = librosa.load(audio_file, sr=None)  # type: ignore
 
     if seconds:
         audio_data = audio_data[: seconds * sr]
@@ -146,6 +147,7 @@ def process_single_file(
         )
     except:
         print(audio_file.stem, 'has errors')
+        chroma_stft, mfcc_stft, mfcc = None, None, None
 
     return (audio_file.stem, chroma_stft, mfcc_stft, mfcc)
 
@@ -159,11 +161,11 @@ def dump_to_file(obj, name: str, dir: Path):
 
 def process_files(
     audio_dir: Path,
-    max_files: int = None,
+    max_files: Union[int, None] = None,
     calc_chroma_stft=True,
     calc_mfcc_stft=True,
     calc_mfcc=True,
-    label: str = None,
+    label: str = '',
 ):
 
     file_list = list(audio_dir.glob('*.wav'))
@@ -199,10 +201,10 @@ def process_files(
             names[i] = name
 
             if calc_chroma_stft:
-                chroma_stfts[i] = chroma_stft
+                chroma_stfts[i] = chroma_stft  # type: ignore
             if calc_mfcc_stft:
-                mfcc_stfts[i] = mfcc_stft
+                mfcc_stfts[i] = mfcc_stft  # type: ignore
             if calc_mfcc:
-                mfccs[i] = mfcc
+                mfccs[i] = mfcc  # type: ignore
 
     return (names, chroma_stfts, mfcc_stfts, mfccs)
