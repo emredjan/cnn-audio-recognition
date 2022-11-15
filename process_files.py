@@ -48,13 +48,13 @@ def main(max_files: Union[int, None]):
             chroma_stfts, d_name + '_chroma_stft', output_dir)
 
         if not Path(chroma_stft_file[0]).exists():
-            print('Error writing chroma_stft_train')
+            print(f'Error writing chroma_stft_{d_name}')
 
         mfcc_stft_file = audio_utils.dump_to_file(
             mfcc_stfts, d_name + '_mfcc_stft', output_dir)
 
         if not Path(mfcc_stft_file[0]).exists():
-            print('Error writing mfcc_stft_train')
+            print(f'Error writing mfcc_stft_{d_name}')
 
 
 if __name__ == "__main__":
