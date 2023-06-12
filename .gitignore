@@ -117,3 +117,4 @@ temp/
 weights/
 logs/
 *.ipynb
+desktop.ini
