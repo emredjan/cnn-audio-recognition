@@ -30,7 +30,7 @@ def encoder_export():
 def main(enc):
 
 
-    devices = {dev.device_type: dev.physical_device_desc for dev in device_lib.list_local_devices()}
+    devices = {dev.device_type: dev.physical_device_desc for dev in device_lib.list_local_devices()}  # type: ignore
 
     if 'GPU' in devices.keys():
         click.secho('Tensorflow: GPU available, will use the following device for calculation:', fg='bright_green')
@@ -74,6 +74,4 @@ def main(enc):
 
 
 if __name__ == "__main__":
-
-
     main()

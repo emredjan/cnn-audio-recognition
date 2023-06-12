@@ -66,14 +66,14 @@ def extract_features(
     )
     mfcc_stft = (
         librosa.feature.mfcc(
-            audio_data, S=stft, sr=sr, n_mfcc=window_size, hop_length=hop_length
+            y=audio_data, S=stft, sr=sr, n_mfcc=window_size, hop_length=hop_length
         )
         if calc_mfcc_stft
         else None
     )
     mfcc = (
         librosa.feature.mfcc(
-            audio_data, sr=sr, n_mfcc=window_size, hop_length=hop_length
+            y=audio_data, sr=sr, n_mfcc=window_size, hop_length=hop_length
         )
         if calc_mfcc
         else None

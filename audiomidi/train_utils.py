@@ -28,7 +28,9 @@ def encode_classes(metadata_paths):
     df = pd.read_json(metadata_paths[0], orient='index')
 
     for mdp in metadata_paths[1:]:
-        df = df.append(pd.read_json(mdp, orient='index'))
+
+        metadata = pd.read_json(mdp, orient='index')
+        df = pd.concat([df, metadata], axis=0, join='outer')
 
     target = df['instrument_family_str'] + '_' + df['pitch'].astype('str')
     # target = df['pitch']
