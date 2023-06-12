@@ -22,6 +22,6 @@ runtime_parameters:
   librosa_hop_length: 512
 training_parameters:
   epochs: 200
-  batch_size: 256
-  early_stop: 5
+  batch_size: 128
+  early_stop: 10
   weight_file_pattern: weights-improvement-{epoch:02d}-{loss:.4f}-bigger.hdf5

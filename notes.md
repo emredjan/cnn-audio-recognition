@@ -1,7 +1,11 @@
 ## Tensorflow logging:
 
 ```PowerShell
-$env:TF_CPP_MIN_LOG_LEVEL=2
+$env:TF_CPP_MIN_LOG_LEVEL=1
+```
+
+```sh
+set -gx TF_CPP_MIN_LOG_LEVEL 1
 ```
 
  Level | Level for Humans | Level Description
@@ -36,10 +40,25 @@ print(device_lib.list_local_devices())
 ## LD PRELOAD
 
 ```sh
-set -x LD_LIBRARY_PATH "$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/:$CONDA_PREFIX/lib/python3.10/site-packages/tensorrt/"
+set -gx LD_LIBRARY_PATH "$LD_LIBRARY_PATH:$CONDA_PREFIX/lib:$CONDA_PREFIX/lib/python3.10/site-packages/tensorrt"
+set -gx XLA_FLAGS "--xla_gpu_cuda_data_dir=$CONDA_PREFIX/lib"
+set -gx TF_GPU_ALLOCATOR cuda_malloc_async
 ```
 
 Made symlinks in `/home/emredjan/conda/envs/tf/lib/python3.10/site-packages/tensorrt`
 
 - `libnvinfer.so.7 -> libnvinfer.so.8`
 - `libnvinfer_plugin.so.7 -> libnvinfer_plugin.so.8`
+
+Install nvcc
+
+- `conda install -c nvidia cuda-nvcc`
+
+Copy lib
+
+```sh
+cd /home/emredjan/conda/envs/tf/lib
+mkdir nvvm
+mkdir nvvm/libdevice
+cp libdevice.10.bc nvvm/libdevice/
+```

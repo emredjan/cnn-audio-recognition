@@ -13,6 +13,7 @@ from tensorflow.keras.layers import (  # type: ignore
     Dropout,
     Flatten,
     MaxPooling2D,
+    SpatialDropout2D
 )
 from tensorflow.keras.models import Sequential  # type: ignore
 from tensorflow.keras.utils import normalize, to_categorical  # type: ignore
@@ -70,10 +71,10 @@ def build_model_old(input_shape: Tuple[int, ...], num_classes: int) -> Sequentia
     )
     model.add(Conv2D(64, (3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.25))
+    model.add(SpatialDropout2D(0.25))
     model.add(Flatten())
     model.add(Dense(128, activation='relu'))
-    model.add(Dropout(0.5))
+    model.add(SpatialDropout2D(0.5))
     model.add(Dense(num_classes, activation='softmax'))
 
     model.compile(
@@ -123,7 +124,7 @@ def build_model(input_shape, num_classes):
     model.add(Dropout(0.5))
     model.add(Dense(num_classes, activation='softmax'))
 
-    opt = Adam(lr=1e-4, decay=1e-4 / params.epochs)
+    opt = Adam(learning_rate=1e-4, beta_1=1e-4 / params.epochs)
 
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 
