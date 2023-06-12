@@ -38,3 +38,8 @@ print(device_lib.list_local_devices())
 ```sh
 set -x LD_LIBRARY_PATH "$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/:$CONDA_PREFIX/lib/python3.10/site-packages/tensorrt/"
 ```
+
+Made symlinks in `/home/emredjan/conda/envs/tf/lib/python3.10/site-packages/tensorrt`
+
+- `libnvinfer.so.7 -> libnvinfer.so.8`
+- `libnvinfer_plugin.so.7 -> libnvinfer_plugin.so.8`
