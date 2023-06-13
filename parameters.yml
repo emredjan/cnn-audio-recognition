@@ -2,13 +2,13 @@ file_locations:
   nsynth_train_audio: data/nsynth-train/audio
   nsynth_test_audio: data/nsynth-test/audio
   nsynth_valid_audio: data/nsynth-valid/audio
-  features_dir: data/features
-  train_data_path: data/features/train_mfcc_stft.joblib
-  valid_data_path: data/features/valid_mfcc_stft.joblib
-  test_data_path: data/features/test_mfcc_stft.joblib
-  train_names_path: data/features/train_name.joblib
-  valid_names_path: data/features/valid_name.joblib
-  test_names_path: data/features/test_name.joblib
+  features_dir: data/features_FULL
+  train_data_path: data/features_FULL/train_mfcc_stft.joblib
+  valid_data_path: data/features_FULL/valid_mfcc_stft.joblib
+  test_data_path: data/features_FULL/test_mfcc_stft.joblib
+  train_names_path: data/features_FULL/train_name.joblib
+  valid_names_path: data/features_FULL/valid_name.joblib
+  test_names_path: data/features_FULL/test_name.joblib
   train_metadata_path: data/nsynth-train/examples.json
   valid_metadata_path: data/nsynth-valid/examples.json
   test_metadata_path: data/nsynth-test/examples.json
@@ -22,6 +22,6 @@ runtime_parameters:
   librosa_hop_length: 512
 training_parameters:
   epochs: 200
-  batch_size: 128
+  batch_size: 256
   early_stop: 10
   weight_file_pattern: weights-improvement-{epoch:02d}-{loss:.4f}-bigger.hdf5

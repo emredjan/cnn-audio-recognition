@@ -4,6 +4,8 @@
 $env:TF_CPP_MIN_LOG_LEVEL=1
 ```
 
+
+
 ```sh
 set -gx TF_CPP_MIN_LOG_LEVEL 1
 ```
@@ -14,6 +16,10 @@ set -gx TF_CPP_MIN_LOG_LEVEL 1
  1     | INFO             | Filter out INFO messages
  2     | WARNING          | Filter out INFO & WARNING messages
  3     | ERROR            | Filter out all messages
+
+
+$env:TF_GPU_ALLOCATOR=cuda_malloc_async
+
 
 ## CUPTI
 

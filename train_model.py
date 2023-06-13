@@ -4,6 +4,7 @@ from typing import Tuple
 import click
 import joblib
 from sklearn.preprocessing import LabelEncoder
+import tensorflow as tf
 from tensorflow.python.client import device_lib  # type: ignore
 
 from audiomidi import params, train_utils
@@ -40,6 +41,16 @@ def main(enc):
     else:
         click.secho('Tensorflow: No compatible device found, exiting.', fg='bright_red')
         return
+
+
+    tf.compat.v1.disable_v2_behavior()
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if gpus:
+        try:
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+        except RuntimeError as e:
+            print(e)
 
     if enc:
         encoder_export()
