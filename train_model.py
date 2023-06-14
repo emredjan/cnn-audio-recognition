@@ -54,6 +54,7 @@ def main(enc):
 
     if enc:
         encoder_export()
+        return
 
     click.secho('Loading encoded classes..', fg='bright_white')
     encoder_file = params.features_dir / 'label_encoder.joblib'
