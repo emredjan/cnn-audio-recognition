@@ -30,6 +30,9 @@ def encoder_export():
 @click.option('--enc', is_flag=True)
 def main(enc):
 
+    if enc:
+        encoder_export()
+        return
 
     devices = {dev.device_type: dev.physical_device_desc for dev in device_lib.list_local_devices()}  # type: ignore
 
@@ -42,7 +45,6 @@ def main(enc):
         click.secho('Tensorflow: No compatible device found, exiting.', fg='bright_red')
         return
 
-
     tf.compat.v1.disable_v2_behavior()
     gpus = tf.config.experimental.list_physical_devices('GPU')
     if gpus:
@@ -51,10 +53,6 @@ def main(enc):
                 tf.config.experimental.set_memory_growth(gpu, True)
         except RuntimeError as e:
             print(e)
-
-    if enc:
-        encoder_export()
-        return
 
     click.secho('Loading encoded classes..', fg='bright_white')
     encoder_file = params.features_dir / 'label_encoder.joblib'
