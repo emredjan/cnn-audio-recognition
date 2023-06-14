@@ -1,14 +1,16 @@
+import os
 from pathlib import Path
 from typing import Tuple
 
 import click
 import joblib
-from sklearn.preprocessing import LabelEncoder
 import tensorflow as tf
+from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.client import device_lib  # type: ignore
 
 from audiomidi import params, train_utils
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
 def encoder_export():
 
