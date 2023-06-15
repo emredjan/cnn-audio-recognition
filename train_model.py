@@ -12,6 +12,8 @@ from audiomidi import params, train_utils
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
+LABELS_FILE: Path = params.features_dir / 'label_encoder.joblib'
+
 def encoder_export():
 
     metadata_paths = [
@@ -19,28 +21,41 @@ def encoder_export():
         params.test_metadata_path
     ]
 
-    click.secho('Encoding classes..', fg='bright_white')
-    encoder = train_utils.encode_classes(metadata_paths)
+    click.secho('Encoding classes..', fg='bright_white', nl=False)
 
-    file_out: Path = params.features_dir / 'label_encoder.joblib'
+    try:
+        encoder = train_utils.encode_classes(metadata_paths)
+    except Exception as e:
+        click.secho(f' Failed: {e}', fg='bright_red')
+        return
 
-    joblib.dump(encoder, file_out)
+    try:
+        file_out = LABELS_FILE
+        joblib.dump(encoder, file_out)
+    except Exception as e:
+        click.secho(f' Failed: {e}', fg='bright_red')
+        return
+
+    click.secho(' Done.', fg='bright_green')
 
 
 
 @click.command()
-@click.option('--enc', is_flag=True)
+@click.option('--enc', is_flag=True, help="Encode the labels and quit.")
 def main(enc):
 
     if enc:
         encoder_export()
         return
 
+    if not LABELS_FILE.exists():
+        encoder_export()
+
     devices = {dev.device_type: dev.physical_device_desc for dev in device_lib.list_local_devices()}  # type: ignore
 
     if 'GPU' in devices.keys():
         click.secho('Tensorflow: GPU available, will use the following device for calculation:', fg='bright_green')
-        click.secho('\t' + (devices.get('GPU') or ''), fg='bright_green')
+        click.secho('\t' + (devices.get('GPU') or ''), fg='bright_white')
     elif 'CPU' in devices.keys():
         click.secho('Tensorflow: Only CPU available, no GPU calculation possible.', fg='bright_yellow')
     else:

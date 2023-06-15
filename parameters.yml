@@ -2,13 +2,13 @@ file_locations:
   nsynth_train_audio: data/nsynth-train/audio
   nsynth_test_audio: data/nsynth-test/audio
   nsynth_valid_audio: data/nsynth-valid/audio
-  features_dir: data/features_SAMPLE
-  train_data_path: data/features_SAMPLE/train_mfcc_stft.joblib
-  valid_data_path: data/features_SAMPLE/valid_mfcc_stft.joblib
-  test_data_path: data/features_SAMPLE/test_mfcc_stft.joblib
-  train_names_path: data/features_SAMPLE/train_name.joblib
-  valid_names_path: data/features_SAMPLE/valid_name.joblib
-  test_names_path: data/features_SAMPLE/test_name.joblib
+  features_dir: data/features_FULL
+  train_data_path: data/features_FULL/train_mfcc_stft.joblib
+  valid_data_path: data/features_FULL/valid_mfcc_stft.joblib
+  test_data_path: data/features_FULL/test_mfcc_stft.joblib
+  train_names_path: data/features_FULL/train_name.joblib
+  valid_names_path: data/features_FULL/valid_name.joblib
+  test_names_path: data/features_FULL/test_name.joblib
   train_metadata_path: data/nsynth-train/examples.json
   valid_metadata_path: data/nsynth-valid/examples.json
   test_metadata_path: data/nsynth-test/examples.json
