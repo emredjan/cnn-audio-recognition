@@ -6,6 +6,9 @@ file_locations:
   train_data_path: data/features_FULL/train_mfcc_stft.joblib
   valid_data_path: data/features_FULL/valid_mfcc_stft.joblib
   test_data_path: data/features_FULL/test_mfcc_stft.joblib
+  train_additional_data_path: data/features_FULL/train_chroma_stft.joblib
+  valid_additional_data_path: data/features_FULL/valid_chroma_stft.joblib
+  test_additional_data_path: data/features_FULL/test_chroma_stft.joblib
   train_names_path: data/features_FULL/train_name.joblib
   valid_names_path: data/features_FULL/valid_name.joblib
   test_names_path: data/features_FULL/test_name.joblib
