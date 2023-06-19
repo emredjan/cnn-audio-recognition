@@ -1,30 +1,26 @@
-file_locations:
-  nsynth_train_audio: data/nsynth-train/audio
-  nsynth_test_audio: data/nsynth-test/audio
-  nsynth_valid_audio: data/nsynth-valid/audio
-  features_dir: data/features_FULL
-  train_data_path: data/features_FULL/train_mfcc_stft.joblib
-  valid_data_path: data/features_FULL/valid_mfcc_stft.joblib
-  test_data_path: data/features_FULL/test_mfcc_stft.joblib
-  train_additional_data_path: data/features_FULL/train_chroma_stft.joblib
-  valid_additional_data_path: data/features_FULL/valid_chroma_stft.joblib
-  test_additional_data_path: data/features_FULL/test_chroma_stft.joblib
-  train_names_path: data/features_FULL/train_name.joblib
-  valid_names_path: data/features_FULL/valid_name.joblib
-  test_names_path: data/features_FULL/test_name.joblib
-  train_metadata_path: data/nsynth-train/examples.json
-  valid_metadata_path: data/nsynth-valid/examples.json
-  test_metadata_path: data/nsynth-test/examples.json
-  weights_dir: data/weights
-  log_dir: data/logs
+---
+data_naming:
+  training: train
+  validation: valid
+  testing: test
+locations:
+  nsynth_data_dir: data/nsynth-||DATA||
+  nsynth_metadata_file_name: examples.json
+  nsynth_audio_dir_name: audio
+  features_base_dir: data/features_||TYPE||
+  weights_base_dir: model/weights
+  log_base_dir: model/logs
 nsynth:
   sample_rate: 16000
   max_seconds: 3
-runtime_parameters:
-  librosa_spec_windows: 50
-  librosa_hop_length: 512
-training_parameters:
+librosa:
+  spec_windows: 50
+  hop_length: 512
+training:
+  targets:
+    - instrument_family_str
+    - pitch
   epochs: 200
   batch_size: 256
   early_stop: 10
-  weight_file_pattern: weights-improvement-{epoch:02d}-{loss:.4f}-bigger.hdf5
+  weight_file_pattern: weights-improvement-{epoch:02d}-{loss:.4f}.hdf5

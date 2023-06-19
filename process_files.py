@@ -1,12 +1,13 @@
-from typing import Union
 import warnings
 from pathlib import Path
 
 import click
 
-from audiomidi import audio_utils, params
+from cnn_audio.params import pr
+from cnn_audio import audio_processing as ap
 
 import os
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 warnings.filterwarnings(action='ignore', category=UserWarning)
@@ -14,47 +15,55 @@ warnings.filterwarnings(action='ignore', category=UserWarning)
 
 @click.command()
 @click.option('-m', '--max-files', default=None, type=int)
-def main(max_files: Union[int, None]):
+def main(max_files: int | None):
+    output_dir_base: str = pr['locations']['features_base_dir']
 
-    output_dir = params.features_dir
+    if max_files:
+        output_dir = Path(output_dir_base.replace('||TYPE||', f'SAMPLE_{max_files}'))
+    else:
+        output_dir = Path(output_dir_base.replace('||TYPE||', 'FULL'))
+
     output_dir.mkdir(exist_ok=True, parents=True)
 
-    # process training files
+    base_dir: str = pr['locations']['nsynth_data_dir']
+    audio_dir: str = pr['locations']['nsynth_audio_dir_name']
 
-    train_dir = params.nsynth_train_audio
-    test_dir = params.nsynth_test_audio
-    valid_dir = params.nsynth_valid_audio
+    train_dir = Path(base_dir.replace('||DATA||', 'train')) / audio_dir
+    test_dir = Path(base_dir.replace('||DATA||', 'test')) / audio_dir
+    valid_dir = Path(base_dir.replace('||DATA||', 'valid')) / audio_dir
 
     dirs = [train_dir, test_dir, valid_dir]
     dir_names = ['train', 'test', 'valid']
 
+    nsynth_max_secs = pr['nsynth']['max_seconds']
+    librosa_spec_windows = pr['librosa']['spec_windows']
+    librosa_hop_length = pr['librosa']['hop_length']
+
+    calculate_features = ['chroma_stft', 'mfcc_stft']
+
     for d, d_name in zip(dirs, dir_names):
 
-        names, chroma_stfts, mfcc_stfts, _ = audio_utils.process_files(
+        names, features = ap.process_files(
             d,
+            seconds=nsynth_max_secs,
+            window_size=librosa_spec_windows,
+            hop_length=librosa_hop_length,
             max_files=max_files,
-            calc_chroma_stft=True,
-            calc_mfcc_stft=True,
-            calc_mfcc=False,
-            label=d_name)
+            calculate=calculate_features,
+            label=d_name,
+        )
 
-        names_file = audio_utils.dump_to_file(names, d_name + '_name',
-                                              output_dir)
+        names_file = ap.dump_to_file(names, d_name + '_name', output_dir)
 
         if not Path(names_file[0]).exists():
-            print('Error writing names')
+            click.secho('Error writing names', fg='bright_red')
 
-        chroma_stft_file = audio_utils.dump_to_file(
-            chroma_stfts, d_name + '_chroma_stft', output_dir)
+        for feature in calculate_features:
 
-        if not Path(chroma_stft_file[0]).exists():
-            print(f'Error writing chroma_stft_{d_name}')
+            feature_file = ap.dump_to_file(features[feature], f'{d_name}_{feature}', output_dir)
 
-        mfcc_stft_file = audio_utils.dump_to_file(
-            mfcc_stfts, d_name + '_mfcc_stft', output_dir)
-
-        if not Path(mfcc_stft_file[0]).exists():
-            print(f'Error writing mfcc_stft_{d_name}')
+            if not Path(feature_file[0]).exists():
+                click.secho(f'Error writing {d_name}_{feature}', fg='bright_red')
 
 
 if __name__ == "__main__":
