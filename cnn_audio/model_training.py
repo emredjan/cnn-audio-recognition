@@ -129,7 +129,6 @@ def build_model(
 
 
 def prepare_training():
-
     weights_dir = Path(pr['locations']['weights_base_dir']) / RUNID
     weights_dir.mkdir(parents=True, exist_ok=True)
 
@@ -150,21 +149,19 @@ def prepare_training():
 
 def train_model(
     model,
-    X_train: np.ndarray | list,
-    y_train: np.ndarray,
-    X_valid: np.ndarray | list,
-    y_valid: np.ndarray,
+    data_train: tuple[np.ndarray | list, np.ndarray],
+    data_valid: tuple[np.ndarray | list, np.ndarray],
     callbacks: list,
     epochs: int,
     batch_size: int,
 ):
     fitted_model = model.fit(
-        X_train,
-        y_train,
+        data_train[0],  # X
+        data_train[1],  # y
         epochs=epochs,
         batch_size=batch_size,
         callbacks=callbacks,
-        validation_data=(X_valid, y_valid),
+        validation_data=data_valid,  # (X, y)
         verbose=1,
     )
 
