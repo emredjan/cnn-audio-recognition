@@ -10,6 +10,7 @@ locations:
   features_base_dir: data/features_||TYPE||
   weights_base_dir: model/weights
   log_base_dir: model/logs
+  model_image_base_dir: model
 nsynth:
   sample_rate: 16000
   max_seconds: 3

@@ -112,9 +112,10 @@ dmypy.json
 
 # project specific
 .vscode/
-data/
+/data/
 temp/
-weights/
+/model/
 logs/
 *.ipynb
 desktop.ini
+*.old.*
