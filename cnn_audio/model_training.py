@@ -162,3 +162,7 @@ def train_model(
     )
 
     return fitted_model
+
+def save_model(model, file_name):
+
+    model.save(file_name, overwrite=True, save_format=None)

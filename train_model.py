@@ -125,6 +125,7 @@ def main(encode, sample):
 
     model = mt.build_model(num_classes, input_shapes)
 
+
     model_plot_file_name = Path(pr['locations']['model_image_dir']) / f'model_{run_id}.png'
     plot_model(model, to_file=str(model_plot_file_name), show_shapes=True)
 
@@ -151,6 +152,9 @@ def main(encode, sample):
         batch_size=pr['model']['batch_size'],
         callbacks=callbacks,
     )
+
+    saved_model_file_name = Path(pr['locations']['saved_model_dir']) / f'model_{run_id}.keras'
+    _ = mt.save_model(model, saved_model_file_name)
 
 
 if __name__ == "__main__":
