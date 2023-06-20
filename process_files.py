@@ -27,8 +27,8 @@ def main(max_files: int | None):
     base_dir: str = pr['locations']['nsynth_data_dir']
     audio_dir: str = pr['locations']['nsynth_audio_dir_name']
 
-    partitions = ['train', 'test', 'valid']
     partition_labels = pr['partitions']
+    partitions = partition_labels.keys()
     dirs = [Path(base_dir.replace('||PARTITION||', d)) / audio_dir for d in partitions]
 
     nsynth_max_secs = pr['nsynth']['max_seconds']
