@@ -1,11 +1,9 @@
 from pathlib import Path
-from typing import Tuple
 
 import click
 import joblib
 import numpy as np
 import pandas as pd
-import pendulum
 
 from tensorflow import keras
 from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
@@ -29,9 +27,7 @@ from sklearn.preprocessing import LabelEncoder
 
 from cnn_audio.params import pr
 
-TARGETS: list[str] = pr['training']['target']
-RUNID: str = pendulum.now().format('YYYYMMDD_HHmmss')
-
+TARGETS: list[str] = pr['model']['targets']
 
 def combine_columns(*args):
     return '_'.join(args)
@@ -54,7 +50,7 @@ def encode_classes(metadata_paths: list[Path]):
 
 def prepare_data(
     data_path: Path, names_path: Path, metadata_path: Path, encoder: LabelEncoder
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     data: np.ndarray = joblib.load(data_path)
     names: np.ndarray = joblib.load(names_path)
     metadata: pd.DataFrame = pd.read_json(metadata_path, orient='index')
@@ -74,7 +70,7 @@ def prepare_data(
 
 def build_model(
     num_classes: int,
-    input_shapes: list[tuple[int]],
+    input_shapes:list[tuple[int, ...]],
 ):
     input_images = []
     for input_shape in input_shapes:
@@ -82,8 +78,10 @@ def build_model(
 
     if len(input_shapes) > 1:
         input_layer = Concatenate(axis=-1)(input_images)
+        model_inputs = input_images
     else:
         input_layer = input_images[0]
+        model_inputs = input_images[0]
 
     conv_1 = Conv2D(
         64,
@@ -118,26 +116,24 @@ def build_model(
     dropout_4 = Dropout(0.5)(dense_1)
     output_layer = Dense(num_classes, activation='softmax')(dropout_4)
 
-    model = Model(inputs=input_images, outputs=output_layer)
+    model = Model(inputs=model_inputs, outputs=output_layer)
 
-    opt = Adam(learning_rate=1e-4, beta_1=1e-4 / pr['training']['epochs'])
+    opt = Adam(learning_rate=1e-4, beta_1=1e-4 / pr['model']['epochs'])
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
-
-    plot_model(model, to_file='./model.png', show_shapes=True)
 
     return model
 
 
-def prepare_training():
-    weights_dir = Path(pr['locations']['weights_base_dir']) / RUNID
+def prepare_training(run_id):
+    weights_dir = Path(pr['locations']['weights_base_dir']) / run_id
     weights_dir.mkdir(parents=True, exist_ok=True)
 
-    weights_file = str(weights_dir) + '/' + pr['training']['weight_file_pattern']
+    weights_file = str(weights_dir) + '/' + pr['model']['weight_file_pattern']
     checkpoint = ModelCheckpoint(weights_file, save_best_only=True)
 
-    earlystopping = EarlyStopping(patience=pr['training']['early_stop'])
+    earlystopping = EarlyStopping(patience=pr['model']['early_stop'])
 
-    log_dir = Path(pr['locations']['log_base_dir']) / RUNID
+    log_dir = Path(pr['locations']['log_base_dir']) / run_id
 
     tensorboard = TensorBoard(log_dir=str(log_dir), update_freq=50)  # type: ignore
     click.secho('Log dir: ' + str(log_dir.absolute()), fg='bright_yellow')

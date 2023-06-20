@@ -1,23 +1,26 @@
 ---
-data_naming:
-  training: train
-  validation: valid
-  testing: test
+partitions:
+  train: training
+  valid: validation
+  test: testing
 locations:
-  nsynth_data_dir: data/nsynth-||DATA||
+  nsynth_data_dir: data/nsynth-||PARTITION||
   nsynth_metadata_file_name: examples.json
   nsynth_audio_dir_name: audio
   features_base_dir: data/features_||TYPE||
   weights_base_dir: model/weights
   log_base_dir: model/logs
-  model_image_base_dir: model
+  model_image_dir: model/images
 nsynth:
   sample_rate: 16000
   max_seconds: 3
 librosa:
   spec_windows: 50
   hop_length: 512
-training:
+model:
+  features:
+    - chroma_stft
+    - mfcc_stft
   targets:
     - instrument_family_str
     - pitch

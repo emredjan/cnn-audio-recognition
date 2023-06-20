@@ -1,39 +1,44 @@
 import os
 import warnings
 from pathlib import Path
-from typing import Tuple
 
 import click
 import joblib
+import pendulum
 import tensorflow as tf
 from sklearn.preprocessing import LabelEncoder
+from tensorflow import keras
 from tensorflow.python.client import device_lib
+from keras.utils import plot_model
 
-from audiomidi import params, train_utils
+from cnn_audio.params import pr
+from cnn_audio import model_training as mt
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 warnings.filterwarnings(action='ignore', category=UserWarning)
 
-LABELS_FILE: Path = params.features_dir / 'label_encoder.joblib'
+NSYNTH_BASE_DIR: str = pr['locations']['nsynth_data_dir']
+NSYNTH_METADATA_FILE_NAME: str = pr['locations']['nsynth_metadata_file_name']
 
-def encoder_export():
 
+def encoder_export(out_file: Path):
+
+    partitions = pr['partitions'].keys()
     metadata_paths = [
-        params.train_metadata_path, params.valid_metadata_path,
-        params.test_metadata_path
+        Path(NSYNTH_BASE_DIR.replace('||PARTITION||', p)) / NSYNTH_METADATA_FILE_NAME
+        for p in partitions
     ]
 
-    click.secho('Encoding classes..', fg='bright_white', nl=False)
+    click.secho('Encoding classes...', fg='bright_white', nl=False)
 
     try:
-        encoder = train_utils.encode_classes(metadata_paths)
+        encoder = mt.encode_classes(metadata_paths)
     except Exception as e:
         click.secho(f' Failed: {e}', fg='bright_red')
         return
 
     try:
-        file_out = LABELS_FILE
-        joblib.dump(encoder, file_out)
+        joblib.dump(encoder, out_file)
     except Exception as e:
         click.secho(f' Failed: {e}', fg='bright_red')
         return
@@ -41,26 +46,38 @@ def encoder_export():
     click.secho(' Done.', fg='bright_green')
 
 
-
 @click.command()
-@click.option('--enc', is_flag=True, help="Encode the labels and quit.")
-@click.option('--double', is_flag=True, help="Use additional data for 2nd image.")
-def main(enc, double):
+@click.option('-e', '--encode', is_flag=True, help="Encode the labels only and quit.")
+@click.option('-s', '--sample', is_flag=True, help="Run only for the sample dataset.")
+def main(encode, sample):
+    features_dir_base: str = pr['locations']['features_base_dir']
 
-    if enc:
-        encoder_export()
+    dir_label = 'SAMPLE' if sample else 'FULL'
+    features_dir = Path(features_dir_base.replace('||TYPE||', dir_label))
+
+    labels_file = features_dir / 'label_encoder.joblib'
+
+    if encode:
+        encoder_export(labels_file)
         return
 
-    if not LABELS_FILE.exists():
-        encoder_export()
+    if not labels_file.exists():
+        encoder_export(labels_file)
+
+    run_id: str = pendulum.now().format('YYYYMMDD_HHmmss')
 
     devices = {dev.device_type: dev.physical_device_desc for dev in device_lib.list_local_devices()}  # type: ignore
 
     if 'GPU' in devices.keys():
-        click.secho('Tensorflow: GPU available, will use the following device for calculation:', fg='bright_green')
+        click.secho(
+            'Tensorflow: GPU available, will use the following device for calculation:',
+            fg='bright_green',
+        )
         click.secho('\t' + (devices.get('GPU') or ''), fg='bright_white')
     elif 'CPU' in devices.keys():
-        click.secho('Tensorflow: Only CPU available, no GPU calculation possible.', fg='bright_yellow')
+        click.secho(
+            'Tensorflow: Only CPU available, no GPU calculation possible.', fg='bright_yellow'
+        )
     else:
         click.secho('Tensorflow: No compatible device found, exiting.', fg='bright_red')
         return
@@ -72,60 +89,68 @@ def main(enc, double):
             for gpu in gpus:
                 tf.config.experimental.set_memory_growth(gpu, True)
         except RuntimeError as e:
-            print(e)
+            click.secho(e, fg='bright_red')
 
     click.secho('Loading encoded classes..', fg='bright_white')
-    encoder_file = params.features_dir / 'label_encoder.joblib'
-    encoder: LabelEncoder = joblib.load(encoder_file)
+    encoder: LabelEncoder = joblib.load(labels_file)
 
-    click.secho('Loading training data..', fg='bright_white')
-    X_train, y_train = train_utils.prepare_data(
-        params.train_data_path, params.train_names_path,
-        params.train_metadata_path, encoder)
+    features = pr['model']['features']
 
-    click.secho('Loading validation data..', fg='bright_white')
-    X_valid, y_valid = train_utils.prepare_data(
-        params.valid_data_path, params.valid_names_path,
-        params.valid_metadata_path, encoder)
+    partition_labels = pr['partitions']
+    partitions = list(partition_labels.keys())
+    partitions.remove('test')
 
-    # click.secho('Loading test data..', fg='bright_white')
-    # X_test, y_test = train_utils.prepare_data(
-    #     params.test_data_path, params.test_names_path,
-    #     params.test_metadata_path, encoder)
+    datasets = {}
 
-    training_data_X = X_train
-    validation_data_X = X_valid
-    input_shape_add: Tuple[int, ...] | None = None
+    for p in partitions:
+        p_label = partition_labels[p]
+        metadata_path = (
+            Path(NSYNTH_BASE_DIR.replace('||PARTITION||', p)) / NSYNTH_METADATA_FILE_NAME
+        )
 
-    if double:
-        click.secho('Loading additional training data..', fg='bright_white')
-        X_train_add, y_train_add = train_utils.prepare_data(
-            params.train_additional_data_path, params.train_names_path,
-            params.train_metadata_path, encoder)
+        feature_sets = {}
+        for f in features:
+            data_path = features_dir / f'{p}_{f}.joblib'
+            names_path = features_dir / f'{p}_name.joblib'
 
-        click.secho('Loading additional validation data..', fg='bright_white')
-        X_valid_add, y_valid_add = train_utils.prepare_data(
-            params.valid_additional_data_path, params.valid_names_path,
-            params.valid_metadata_path, encoder)
+            click.secho(f'Loading {p_label} data for {f}...', fg='bright_white', nl=False)
+            dataset = mt.prepare_data(data_path, names_path, metadata_path, encoder)
+            feature_sets[f] = dataset
+            click.secho(' Done.', fg='bright_green')
 
-        # click.secho('Loading additional test data..', fg='bright_white')
-        # X_test_add, y_test_add = train_utils.prepare_data(
-        #     params.test_additional_data_path, params.test_names_path,
-        #     params.test_metadata_path, encoder)
-
-        input_shape_add = X_train_add[0].shape
-        training_data_X = [X_train, X_train_add]
-        validation_data_X = [X_valid, X_valid_add]
-
+        datasets[p] = feature_sets
 
     num_classes: int = len(encoder.classes_)
-    input_shape: Tuple[int, ...] = X_train[0].shape
+    input_shapes: list[tuple[int, ...]] = [datasets['train'][f][0][0].shape for f in features]
 
-    model = train_utils.build_model(num_classes, input_shape, input_shape_add)
-    callbacks = train_utils.prepare_training()
+    model = mt.build_model(num_classes, input_shapes)
 
-    _ = train_utils.train_model(model, training_data_X, y_train, validation_data_X,
-                                          y_valid, callbacks)
+    model_plot_file_name = Path(pr['locations']['model_image_dir']) / f'model_{run_id}.png'
+    plot_model(model, to_file=str(model_plot_file_name), show_shapes=True)
+
+    callbacks = mt.prepare_training(run_id)
+
+    if len(features) > 1:
+        data_train = (
+            [datasets['train'][f][0] for f in features],
+            datasets['train'][features[0]][1],
+        )
+        data_valid = (
+            [datasets['valid'][f][0] for f in features],
+            datasets['valid'][features[0]][1],
+        )
+    else:
+        data_train = (datasets['train'][features[0]][0], datasets['train'][features[0]][1])
+        data_valid = (datasets['valid'][features[0]][0], datasets['valid'][features[0]][1])
+
+    _ = mt.train_model(
+        model,
+        data_train,
+        data_valid,
+        epochs=pr['model']['epochs'],
+        batch_size=pr['model']['batch_size'],
+        callbacks=callbacks,
+    )
 
 
 if __name__ == "__main__":
