@@ -47,7 +47,8 @@ def main(max_files: int | None, export_joblib: bool, export_tfrecord: bool, expo
     calculate_features = pr['model']['features']
     targets = pr['model']['targets']
 
-    labels_file = output_dir / 'label_encoder.joblib'
+    labels_file_stem = 'label_encoder'
+    labels_file = None
 
     if export_joblib:
 
@@ -55,6 +56,7 @@ def main(max_files: int | None, export_joblib: bool, export_tfrecord: bool, expo
 
             d_label = partition_labels[d_name]
 
+            logger.debug(f"Started processing audio files for {d_label} data")
             names, features = ap.process_files(
                 d,
                 seconds=nsynth_max_secs,
@@ -62,20 +64,25 @@ def main(max_files: int | None, export_joblib: bool, export_tfrecord: bool, expo
                 hop_length=librosa_hop_length,
                 max_files=max_files,
                 calculate=calculate_features,
-                label=d_label,
             )
+            logger.info(f"Processed audio files for {d_label} data")
 
+
+            logger.debug(f"Started writing names file for {d_label}")
             names_file = ap.dump_to_file(names, d_name + '_name', output_dir)
+            logger.info(f"Names file for {d_label} written as: {Path(names_file[0])}")
 
             if not Path(names_file[0]).exists():
-                click.secho('Error writing names', fg='bright_red')
+                logger.error(f"Failed writing names file for {d_label}")
 
             for feature in calculate_features:
 
+                logger.debug(f"Started writing {feature} feature file for {d_label} data")
                 feature_file = ap.dump_to_file(features[feature], f'{d_name}_{feature}', output_dir)
+                logger.info(f"{feature} feature file for {d_label} data written as: {feature_file[0]}")
 
                 if not Path(feature_file[0]).exists():
-                    click.secho(f'Error writing {d_name}_{feature}', fg='bright_red')
+                    logger.error(f"Failed writing {feature} feature file for {d_label} data")
 
     if export_encoder:
 
@@ -84,13 +91,21 @@ def main(max_files: int | None, export_joblib: bool, export_tfrecord: bool, expo
             for p in partitions
         ]
 
-        ap.encoder_export(labels_file, targets, metadata_paths)
+        logger.debug("Started encoding target classes")
+        encoder = ap.encode_classes(metadata_paths, targets)
+        logger.info("Encoded target classes")
+
+        logger.debug("Started writing encoded target classes to file")
+        labels_file_ = ap.dump_to_file(encoder, labels_file_stem, output_dir)
+        labels_file = Path(labels_file_[0])
+        logger.info(f"Written encoded target classes to file: {labels_file}")
+
 
     if export_tfrecord:
 
         for partition in partitions:
 
-            logger.info(f"Processing TFRecord file for {partition_labels[partition]} data")
+            logger.debug(f"Started processing TFRecord file for {partition_labels[partition]} data")
 
             tf_record_file = output_dir / f'{partition}.tfrecord'
 
@@ -98,12 +113,14 @@ def main(max_files: int | None, export_joblib: bool, export_tfrecord: bool, expo
             names_file = output_dir / f"{partition}_name.joblib"
             metadata_path = Path(base_dir.replace('||PARTITION||', partition)) / nsynth_metadata_file_name
 
+            if not labels_file:
+                labels_file = output_dir / f"{labels_file_stem}.joblib"
 
+            logger.debug(f"Started loading data for {partition_labels[partition]}")
             data = {feature: joblib.load(data_path) for feature, data_path in zip(calculate_features, data_files)}
             names = joblib.load(names_file)
             encoder = joblib.load(labels_file)
             metadata = pd.read_json(metadata_path, orient='index')
-
 
             df = pd.DataFrame({}, index=names).merge(
                     metadata, how='left', left_index=True, right_index=True
@@ -116,10 +133,12 @@ def main(max_files: int | None, export_joblib: bool, export_tfrecord: bool, expo
 
             # data_shape = data[calculate_features[0]][0].shape
 
+            logger.debug(f"Started writing TFRecord file for {partition_labels[partition]} data")
             ap.write_tfrecord(data, label_enc, tf_record_file, calculate_features)
+            logger.info(f"Written TFRecord file for {partition_labels[partition]} data as: {tf_record_file}")
 
             if not tf_record_file.exists():
-                click.secho('Error writing tfrecord file', fg='bright_red')
+                logger.error("Failed writing tfrecord file")
 
 
 if __name__ == "__main__":

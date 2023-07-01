@@ -114,7 +114,6 @@ def process_files(
     window_size: int,
     hop_length: int,
     calculate: list[str],
-    label: str,
 ):
     file_list = list(audio_dir.glob('*.wav'))
 
@@ -134,9 +133,7 @@ def process_files(
     for feature in calculate:
         features[feature] = np.empty((num_files, window_size, t))
 
-    p_label = f"\tProcessing {label:<5} files"
-
-    with click.progressbar(file_list, label=p_label) as bar:
+    with click.progressbar(file_list, label="\tProcessing audio files") as bar:
 
         for i, f in enumerate(bar):
             name, features_single_file = process_single_file(
@@ -174,25 +171,17 @@ def encode_classes(metadata_paths: list[Path], targets: list):
     return encoder
 
 
-def encoder_export(out_file: Path, targets: list, metadata_paths):
-
-    click.secho('Encoding classes...', fg='bright_white', nl=False)
+def encoder_export(out_file: Path, targets: list, metadata_paths) -> None | Exception:
 
     try:
         encoder = encode_classes(metadata_paths, targets)
     except Exception as e:
-        click.secho(f' Failed: {e}', fg='bright_red')
-        return
-    click.secho(' Done.', fg='bright_green')
+        return e
 
-    click.secho('Writing file...', fg='bright_white', nl=False)
     try:
         joblib.dump(encoder, out_file)
     except Exception as e:
-        click.secho(f' Failed: {e}', fg='bright_red')
-        return
-
-    click.secho(' Done.', fg='bright_green')
+        return e
 
 
 

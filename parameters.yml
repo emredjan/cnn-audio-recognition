@@ -12,6 +12,7 @@ locations:
   log_base_dir: model/logs
   model_image_dir: model/images
   saved_model_dir: model/full
+  runtime_log_file: runtime.log
 nsynth:
   sample_rate: 16000
   max_seconds: 3
