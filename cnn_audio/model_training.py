@@ -29,9 +29,8 @@ from sklearn.preprocessing import LabelEncoder
 
 from cnn_audio.params import pr
 
-TARGETS: list[str] = pr['model']['targets']
-AUDIO_FEATURES = pr['model']['features']
-DATA_SHAPE = (50, 94, 2)
+# TODO: find a way to get this dynamically for the parsing function
+DATA_SHAPE: tuple[int, ...] = (50, 94, 2)
 
 def parse_tfrecord(example_proto):
 

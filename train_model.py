@@ -73,7 +73,9 @@ def main(sample):
         datasets[p] = datasets[p].prefetch(buffer_size=tf.data.AUTOTUNE)
 
     num_classes: int = len(encoder.classes_)
-    input_shape: tuple[int, ...] = (50, 94, 2)
+
+    data_shape_path = features_dir / 'data_shape.joblib'
+    input_shape: tuple[int, ...] = joblib.load(data_shape_path)
 
     model = mt.build_model(num_classes, input_shape)
 
