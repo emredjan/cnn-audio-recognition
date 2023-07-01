@@ -192,7 +192,12 @@ def write_tfrecord(data: dict[str, np.ndarray], labels: np.ndarray, file_name: P
     for af in audio_features:
         arrays_to_combine.append(np.expand_dims(data[af], axis=-1))
 
-    data_array = np.concatenate(arrays_to_combine, axis=-1)
+    if len(audio_features) > 1:
+        data_array = np.concatenate(arrays_to_combine, axis=-1)
+    else:
+        data_array = arrays_to_combine[0]
+
+    data_shape = data_array[0].shape
 
     tf_file_name = str(file_name)
     with tf.io.TFRecordWriter(tf_file_name) as writer:
@@ -207,3 +212,5 @@ def write_tfrecord(data: dict[str, np.ndarray], labels: np.ndarray, file_name: P
 
                 example = tf.train.Example(features=tf.train.Features(feature=feature))  # type: ignore
                 writer.write(example.SerializeToString())  # type: ignore
+
+    return data_shape

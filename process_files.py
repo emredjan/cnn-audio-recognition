@@ -131,10 +131,10 @@ def main(max_files: int | None, export_joblib: bool, export_tfrecord: bool, expo
 
             logger.debug(f"Loaded data for {partition_labels[partition]}")
 
-            # data_shape = data[calculate_features[0]][0].shape
 
             logger.debug(f"Started writing TFRecord file for {partition_labels[partition]} data")
-            ap.write_tfrecord(data, label_enc, tf_record_file, calculate_features)
+            data_shape = ap.write_tfrecord(data, label_enc, tf_record_file, calculate_features)
+            _ = ap.dump_to_file(data_shape, 'data_shape', output_dir)
             logger.info(f"Written TFRecord file for {partition_labels[partition]} data as: {tf_record_file}")
 
             if not tf_record_file.exists():

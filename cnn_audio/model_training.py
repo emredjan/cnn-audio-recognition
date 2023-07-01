@@ -33,28 +33,6 @@ TARGETS: list[str] = pr['model']['targets']
 AUDIO_FEATURES = pr['model']['features']
 DATA_SHAPE = (50, 94, 2)
 
-
-
-# def prepare_dataXX(
-#     data_path: Path, names_path: Path, metadata_path: Path, encoder: LabelEncoder
-# ) -> tuple[np.ndarray, np.ndarray]:
-#     data: np.ndarray = joblib.load(data_path)
-#     names: np.ndarray = joblib.load(names_path)
-#     metadata: pd.DataFrame = pd.read_json(metadata_path, orient='index')
-
-#     df = pd.DataFrame({}, index=names).merge(
-#         metadata, how='left', left_index=True, right_index=True
-#     )
-
-#     target: pd.Series = df[TARGETS].astype(str).apply(lambda row: combine_columns(*row), axis=1, result_type=None)
-#     target_enc: np.ndarray = encoder.transform(target)  # type: ignore
-
-#     X: np.ndarray = data.reshape(data.shape + (1,))
-#     y: np.ndarray = to_categorical(target_enc, len(encoder.classes_))
-
-#     return X, y
-
-
 def parse_tfrecord(example_proto):
 
     feature_description = {
@@ -71,22 +49,11 @@ def parse_tfrecord(example_proto):
 
     return input_feature, label_feature
 
-
-
 def build_model(
     num_classes: int,
-    input_shapes:list[tuple[int, ...]],
+    input_shape:tuple[int, ...],
 ):
-    input_images = []
-    for input_shape in input_shapes:
-        input_images.append(Input(shape=input_shape))
-
-    if len(input_shapes) > 1:
-        input_layer = Concatenate(axis=-1)(input_images)
-        model_inputs = input_images
-    else:
-        input_layer = input_images[0]
-        model_inputs = input_images[0]
+    input_layer = Input(shape=input_shape)
 
     conv_1 = Conv2D(
         64,
@@ -121,7 +88,7 @@ def build_model(
     dropout_4 = Dropout(0.5)(dense_1)
     output_layer = Dense(num_classes, activation='softmax')(dropout_4)
 
-    model = Model(inputs=model_inputs, outputs=output_layer)
+    model = Model(inputs=input_layer, outputs=output_layer)
 
     opt = Adam(learning_rate=1e-4, beta_1=1e-4 / pr['model']['epochs'])
     model.compile(loss=SparseCategoricalCrossentropy(), optimizer=opt, metrics=['accuracy'])
@@ -129,21 +96,12 @@ def build_model(
     return model
 
 
-def build_modelxxx(    num_classes: int,
-    input_shapes:list[tuple[int, ...]],):
+def build_modelxxx(
+    num_classes: int,
+    input_shape:tuple[int, ...],
+):
 
-    input_images = []
-    for input_shape in input_shapes:
-        input_images.append(Input(shape=input_shape))
-
-    if len(input_shapes) > 1:
-        input_layer = Concatenate(axis=-1)(input_images)
-        model_inputs = input_images
-    else:
-        input_layer = input_images[0]
-        model_inputs = input_images[0]
-
-
+    input_layer = Input(shape=input_shape)
 
     x = Conv2D(32, kernel_size=(3, 3), activation="relu", padding="same")(input_layer)
     x = MaxPooling2D(pool_size=(2, 2))(x)
@@ -166,7 +124,7 @@ def build_modelxxx(    num_classes: int,
     x = Dropout(0.5)(x)
     outputs = Dense(num_classes, activation="softmax")(x)
 
-    model = Model(inputs=model_inputs, outputs=outputs)
+    model = Model(inputs=input_layer, outputs=outputs)
 
     opt = Adam(learning_rate=1e-4, beta_1=1e-4 / pr['model']['epochs'])
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
@@ -194,29 +152,22 @@ def prepare_training(run_id):
 
 
 def train_model(
-    model,
-    data_train: tuple[np.ndarray | list, np.ndarray] | tf.data.Dataset,
-    data_valid: tuple[np.ndarray | list, np.ndarray] | tf.data.Dataset,
+    model: Model,
+    data_train: tf.data.Dataset,
+    data_valid: tf.data.Dataset,
     callbacks: list,
     epochs: int,
     batch_size: int,
 ):
 
-    if isinstance(data_train, tf.data.Dataset):
-        X_train = data_train
-        y_train = None
-    else:
-        X_train = data_train[0]
-        y_train = data_train[1]
-
     fitted_model = model.fit(
-        X_train,
-        y_train,
+        x=data_train,
+        y=None,  # Embedded in tf dataset
         epochs=epochs,
         batch_size=batch_size,
         callbacks=callbacks,
         validation_data=data_valid,
-        verbose=1,
+        verbose=1,  # type: ignore
     )
 
     return fitted_model

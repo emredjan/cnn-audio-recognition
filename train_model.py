@@ -47,51 +47,18 @@ def main(sample):
         logger.error('Tensorflow: No compatible device found, exiting.')
         return
 
-    # tf.compat.v1.disable_v2_behavior()
-    # gpus = tf.config.experimental.list_physical_devices('GPU')
-    # if gpus:
-    #     try:
-    #         for gpu in gpus:
-    #             tf.config.experimental.set_memory_growth(gpu, True)
-    #     except RuntimeError as e:
-    #         click.secho(e, fg='bright_red')
-
     logger.debug('Started loading encoded classes')
     encoder: LabelEncoder = joblib.load(labels_file)
     logger.info('Loaded encoded classes')
-
-    features = pr['model']['features']
 
     partition_labels = pr['partitions']
     partitions = list(partition_labels.keys())
     partitions.remove('test')
 
     datasets = {}
-
-    # for p in partitions:
-    #     p_label = partition_labels[p]
-    #     metadata_path = (
-    #         Path(NSYNTH_BASE_DIR.replace('||PARTITION||', p)) / NSYNTH_METADATA_FILE_NAME
-    #     )
-
-    #     feature_sets = {}
-    #     for f in features:
-    #         data_path = features_dir / f'{p}_{f}.joblib'
-    #         names_path = features_dir / f'{p}_name.joblib'
-
-    #         click.secho(f'Loading {p_label} data for {f}...', fg='bright_white', nl=False)
-    #         dataset = mt.prepare_data(data_path, names_path, metadata_path, encoder)
-    #         feature_sets[f] = dataset
-    #         click.secho(' Done.', fg='bright_green')
-
-    #     datasets[p] = feature_sets
-
     batch_size=pr['model']['batch_size']
 
-
     for p in partitions:
-
-        p_label = partition_labels[p]
 
         data_path = features_dir / f'{p}.tfrecord'
         names_path = features_dir / f'{p}_name.joblib'
@@ -101,48 +68,24 @@ def main(sample):
         datasets[p] = tf.data.TFRecordDataset(filenames = [data_path])
 
         datasets[p] = datasets[p].map(mt.parse_tfrecord)
-        # datasets[p] = datasets[p].map(lambda example: ({'input_1': example['chroma_stft'], 'input_2': example['mfcc_stft']}, example['label']))
-
 
         datasets[p] = datasets[p].shuffle(num_samples).batch(batch_size)
-
-        # Prefetch data for better performance
         datasets[p] = datasets[p].prefetch(buffer_size=tf.data.AUTOTUNE)
 
-
-
     num_classes: int = len(encoder.classes_)
-    # input_shapes: list[tuple[int, ...]] = [datasets['train'][f][0][0].shape for f in features]
-    input_shapes: list[tuple[int, ...]] = [(50, 94, 2)]
+    input_shape: tuple[int, ...] = (50, 94, 2)
 
-
-    model = mt.build_model(num_classes, input_shapes)
+    model = mt.build_model(num_classes, input_shape)
 
     model_plot_file_name = Path(pr['locations']['model_image_dir']) / f'model_{run_id}.png'
     plot_model(model, to_file=str(model_plot_file_name), show_shapes=True)
 
     callbacks = mt.prepare_training(run_id)
 
-    # if len(features) > 1:
-    #     data_train = (
-    #         [datasets['train'][f][0] for f in features],
-    #         datasets['train'][features[0]][1],
-    #     )
-    #     data_valid = (
-    #         [datasets['valid'][f][0] for f in features],
-    #         datasets['valid'][features[0]][1],
-    #     )
-    # else:
-    #     data_train = (datasets['train'][features[0]][0], datasets['train'][features[0]][1])
-    #     data_valid = (datasets['valid'][features[0]][0], datasets['valid'][features[0]][1])
-
-    data_train = datasets['train']
-    data_valid = datasets['valid']
-
     _ = mt.train_model(
-        model,
-        data_train,
-        data_valid,
+        model=model,
+        data_train=datasets['train'],
+        data_valid = datasets['valid'],
         epochs=pr['model']['epochs'],
         batch_size=batch_size,
         callbacks=callbacks,
