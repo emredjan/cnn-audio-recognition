@@ -26,6 +26,6 @@ model:
     - instrument_family_str
     - pitch
   epochs: 200
-  batch_size: 256
+  batch_size: 128
   early_stop: 10
   weight_file_pattern: weights-{epoch:02d}-{val_loss:.4f}.hdf5

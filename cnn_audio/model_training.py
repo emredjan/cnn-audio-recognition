@@ -4,6 +4,7 @@ import click
 import joblib
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 
 from tensorflow import keras
 from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
@@ -19,6 +20,7 @@ from keras.layers import (
     MaxPooling2D,
     SpatialDropout2D,
 )
+from keras.losses import CategoricalCrossentropy, SparseCategoricalCrossentropy
 from keras.models import Model, Sequential
 from keras.optimizers import Adam, RMSprop
 from keras.regularizers import l2
@@ -28,44 +30,47 @@ from sklearn.preprocessing import LabelEncoder
 from cnn_audio.params import pr
 
 TARGETS: list[str] = pr['model']['targets']
-
-def combine_columns(*args):
-    return '_'.join(args)
-
-
-def encode_classes(metadata_paths: list[Path]):
-    df = pd.read_json(metadata_paths[0], orient='index')
-
-    for mdp in metadata_paths[1:]:
-        metadata = pd.read_json(mdp, orient='index')
-        df = pd.concat([df, metadata], axis=0, join='outer')
-
-    target: pd.Series = df[TARGETS].astype(str).apply(lambda row: combine_columns(*row), axis=1)
-
-    encoder = LabelEncoder()
-    encoder.fit(target)
-
-    return encoder
+AUDIO_FEATURES = pr['model']['features']
+DATA_SHAPE = (50, 94, 2)
 
 
-def prepare_data(
-    data_path: Path, names_path: Path, metadata_path: Path, encoder: LabelEncoder
-) -> tuple[np.ndarray, np.ndarray]:
-    data: np.ndarray = joblib.load(data_path)
-    names: np.ndarray = joblib.load(names_path)
-    metadata: pd.DataFrame = pd.read_json(metadata_path, orient='index')
 
-    df = pd.DataFrame({}, index=names).merge(
-        metadata, how='left', left_index=True, right_index=True
-    )
+# def prepare_dataXX(
+#     data_path: Path, names_path: Path, metadata_path: Path, encoder: LabelEncoder
+# ) -> tuple[np.ndarray, np.ndarray]:
+#     data: np.ndarray = joblib.load(data_path)
+#     names: np.ndarray = joblib.load(names_path)
+#     metadata: pd.DataFrame = pd.read_json(metadata_path, orient='index')
 
-    target: pd.Series = df[TARGETS].astype(str).apply(lambda row: combine_columns(*row), axis=1)
-    target_enc: np.ndarray = encoder.transform(target)  # type: ignore
+#     df = pd.DataFrame({}, index=names).merge(
+#         metadata, how='left', left_index=True, right_index=True
+#     )
 
-    X: np.ndarray = data.reshape(data.shape + (1,))
-    y: np.ndarray = to_categorical(target_enc, len(encoder.classes_))
+#     target: pd.Series = df[TARGETS].astype(str).apply(lambda row: combine_columns(*row), axis=1, result_type=None)
+#     target_enc: np.ndarray = encoder.transform(target)  # type: ignore
 
-    return X, y
+#     X: np.ndarray = data.reshape(data.shape + (1,))
+#     y: np.ndarray = to_categorical(target_enc, len(encoder.classes_))
+
+#     return X, y
+
+
+def parse_tfrecord(example_proto):
+
+    feature_description = {
+        'input': tf.io.FixedLenFeature([DATA_SHAPE[0] * DATA_SHAPE[1] * DATA_SHAPE[2]], tf.float32),
+        'label': tf.io.FixedLenFeature([], tf.int64)
+    }
+
+    parsed_example = tf.io.parse_single_example(example_proto, feature_description)
+
+    parsed_example['input'] = tf.reshape(parsed_example['input'], DATA_SHAPE)
+
+    input_feature = parsed_example['input']
+    label_feature = parsed_example['label']
+
+    return input_feature, label_feature
+
 
 
 def build_model(
@@ -119,9 +124,55 @@ def build_model(
     model = Model(inputs=model_inputs, outputs=output_layer)
 
     opt = Adam(learning_rate=1e-4, beta_1=1e-4 / pr['model']['epochs'])
+    model.compile(loss=SparseCategoricalCrossentropy(), optimizer=opt, metrics=['accuracy'])
+
+    return model
+
+
+def build_modelxxx(    num_classes: int,
+    input_shapes:list[tuple[int, ...]],):
+
+    input_images = []
+    for input_shape in input_shapes:
+        input_images.append(Input(shape=input_shape))
+
+    if len(input_shapes) > 1:
+        input_layer = Concatenate(axis=-1)(input_images)
+        model_inputs = input_images
+    else:
+        input_layer = input_images[0]
+        model_inputs = input_images[0]
+
+
+
+    x = Conv2D(32, kernel_size=(3, 3), activation="relu", padding="same")(input_layer)
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+    x = Dropout(0.25)(x)
+
+    x = Conv2D(64, kernel_size=(3, 3), activation="relu", padding="same")(x)
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+    x = Dropout(0.25)(x)
+
+    x = Conv2D(128, kernel_size=(3, 3), activation="relu", padding="same")(x)
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+    x = Dropout(0.25)(x)
+
+    x = Conv2D(256, kernel_size=(3, 3), activation="relu", padding="same")(x)
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+    x = Dropout(0.25)(x)
+
+    x = Flatten()(x)
+    x = Dense(256, activation="relu")(x)
+    x = Dropout(0.5)(x)
+    outputs = Dense(num_classes, activation="softmax")(x)
+
+    model = Model(inputs=model_inputs, outputs=outputs)
+
+    opt = Adam(learning_rate=1e-4, beta_1=1e-4 / pr['model']['epochs'])
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 
     return model
+
 
 
 def prepare_training(run_id):
@@ -136,7 +187,6 @@ def prepare_training(run_id):
     log_dir = Path(pr['locations']['log_base_dir']) / run_id
 
     tensorboard = TensorBoard(log_dir=str(log_dir), update_freq=50)  # type: ignore
-    click.secho('Log dir: ' + str(log_dir.absolute()), fg='bright_yellow')
 
     callbacks_list = [checkpoint, earlystopping, tensorboard]
 
@@ -145,19 +195,27 @@ def prepare_training(run_id):
 
 def train_model(
     model,
-    data_train: tuple[np.ndarray | list, np.ndarray],
-    data_valid: tuple[np.ndarray | list, np.ndarray],
+    data_train: tuple[np.ndarray | list, np.ndarray] | tf.data.Dataset,
+    data_valid: tuple[np.ndarray | list, np.ndarray] | tf.data.Dataset,
     callbacks: list,
     epochs: int,
     batch_size: int,
 ):
+
+    if isinstance(data_train, tf.data.Dataset):
+        X_train = data_train
+        y_train = None
+    else:
+        X_train = data_train[0]
+        y_train = data_train[1]
+
     fitted_model = model.fit(
-        data_train[0],  # X
-        data_train[1],  # y
+        X_train,
+        y_train,
         epochs=epochs,
         batch_size=batch_size,
         callbacks=callbacks,
-        validation_data=data_valid,  # (X, y)
+        validation_data=data_valid,
         verbose=1,
     )
 

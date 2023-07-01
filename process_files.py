@@ -2,9 +2,12 @@ import warnings
 from pathlib import Path
 
 import click
+import joblib
+import pandas as pd
 
 from cnn_audio.params import pr
-from cnn_audio import audio_processing as ap
+from cnn_audio import preprocessing as ap
+from cnn_audio.setup_logger import get_logger
 
 import os
 
@@ -15,7 +18,12 @@ warnings.filterwarnings(action='ignore', category=UserWarning)
 
 @click.command()
 @click.option('-m', '--max-files', default=None, type=int)
-def main(max_files: int | None):
+@click.option('-j', '--export-joblib', is_flag=True)
+@click.option('-t', '--export-tfrecord', is_flag=True)
+@click.option('-e', '--export-encoder', is_flag=True)
+def main(max_files: int | None, export_joblib: bool, export_tfrecord: bool, export_encoder: bool):
+
+    logger = get_logger()
 
     output_dir_base: str = pr['locations']['features_base_dir']
 
@@ -26,6 +34,7 @@ def main(max_files: int | None):
 
     base_dir: str = pr['locations']['nsynth_data_dir']
     audio_dir: str = pr['locations']['nsynth_audio_dir_name']
+    nsynth_metadata_file_name: str = pr['locations']['nsynth_metadata_file_name']
 
     partition_labels = pr['partitions']
     partitions = partition_labels.keys()
@@ -36,32 +45,81 @@ def main(max_files: int | None):
     librosa_hop_length = pr['librosa']['hop_length']
 
     calculate_features = pr['model']['features']
+    targets = pr['model']['targets']
 
-    for d, d_name in zip(dirs, partitions):
+    labels_file = output_dir / 'label_encoder.joblib'
 
-        d_label = partition_labels[d_name]
+    if export_joblib:
 
-        names, features = ap.process_files(
-            d,
-            seconds=nsynth_max_secs,
-            window_size=librosa_spec_windows,
-            hop_length=librosa_hop_length,
-            max_files=max_files,
-            calculate=calculate_features,
-            label=d_label,
-        )
+        for d, d_name in zip(dirs, partitions):
 
-        names_file = ap.dump_to_file(names, d_name + '_name', output_dir)
+            d_label = partition_labels[d_name]
 
-        if not Path(names_file[0]).exists():
-            click.secho('Error writing names', fg='bright_red')
+            names, features = ap.process_files(
+                d,
+                seconds=nsynth_max_secs,
+                window_size=librosa_spec_windows,
+                hop_length=librosa_hop_length,
+                max_files=max_files,
+                calculate=calculate_features,
+                label=d_label,
+            )
 
-        for feature in calculate_features:
+            names_file = ap.dump_to_file(names, d_name + '_name', output_dir)
 
-            feature_file = ap.dump_to_file(features[feature], f'{d_name}_{feature}', output_dir)
+            if not Path(names_file[0]).exists():
+                click.secho('Error writing names', fg='bright_red')
 
-            if not Path(feature_file[0]).exists():
-                click.secho(f'Error writing {d_name}_{feature}', fg='bright_red')
+            for feature in calculate_features:
+
+                feature_file = ap.dump_to_file(features[feature], f'{d_name}_{feature}', output_dir)
+
+                if not Path(feature_file[0]).exists():
+                    click.secho(f'Error writing {d_name}_{feature}', fg='bright_red')
+
+    if export_encoder:
+
+        metadata_paths = [
+            Path(base_dir.replace('||PARTITION||', p)) / nsynth_metadata_file_name
+            for p in partitions
+        ]
+
+        ap.encoder_export(labels_file, targets, metadata_paths)
+
+    if export_tfrecord:
+
+        for partition in partitions:
+
+            logger.info(f"Processing TFRecord file for {partition_labels[partition]} data")
+
+            tf_record_file = output_dir / f'{partition}.tfrecord'
+
+            data_files = [output_dir / f"{partition}_{feature}.joblib" for feature in calculate_features]
+            names_file = output_dir / f"{partition}_name.joblib"
+            metadata_path = Path(base_dir.replace('||PARTITION||', partition)) / nsynth_metadata_file_name
+
+
+            data = {feature: joblib.load(data_path) for feature, data_path in zip(calculate_features, data_files)}
+            names = joblib.load(names_file)
+            encoder = joblib.load(labels_file)
+            metadata = pd.read_json(metadata_path, orient='index')
+
+
+            df = pd.DataFrame({}, index=names).merge(
+                    metadata, how='left', left_index=True, right_index=True
+                )
+
+            label: pd.Series = df[targets].astype(str).apply(lambda row: ap.combine_columns(*row), axis=1, result_type=None)
+            label_enc: np.ndarray = encoder.transform(label)  # type: ignore
+
+            logger.debug(f"Loaded data for {partition_labels[partition]}")
+
+            # data_shape = data[calculate_features[0]][0].shape
+
+            ap.write_tfrecord(data, label_enc, tf_record_file, calculate_features)
+
+            if not tf_record_file.exists():
+                click.secho('Error writing tfrecord file', fg='bright_red')
 
 
 if __name__ == "__main__":
