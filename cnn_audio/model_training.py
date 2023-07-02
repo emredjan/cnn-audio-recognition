@@ -29,19 +29,22 @@ from sklearn.preprocessing import LabelEncoder
 
 from cnn_audio.params import pr
 
-# TODO: find a way to get this dynamically for the parsing function
-DATA_SHAPE: tuple[int, ...] = (50, 94, 2)
+
 
 def parse_tfrecord(example_proto):
 
+    # TODO: find a way to get these dynamically (and efficiently!) for the parsing function
+    data_shape: tuple[int, ...] = (50, 94, 2)
+    value_count = 9400  # data_shape[0] * data_shape[1] * data_shape[2]
+
     feature_description = {
-        'input': tf.io.FixedLenFeature([DATA_SHAPE[0] * DATA_SHAPE[1] * DATA_SHAPE[2]], tf.float32),
+        'input': tf.io.FixedLenFeature([value_count], tf.float32),
         'label': tf.io.FixedLenFeature([], tf.int64)
     }
 
     parsed_example = tf.io.parse_single_example(example_proto, feature_description)
 
-    parsed_example['input'] = tf.reshape(parsed_example['input'], DATA_SHAPE)
+    parsed_example['input'] = tf.reshape(parsed_example['input'], data_shape)
 
     input_feature = parsed_example['input']
     label_feature = parsed_example['label']
@@ -70,15 +73,15 @@ def build_model(
         dropout_1
     )
 
-    conv_4 = Conv2D(128, (3, 3), activation='relu')(conv_3)
-    max_pool_2 = MaxPooling2D(pool_size=(2, 2))(conv_4)
-    dropout_2 = Dropout(0.25)(max_pool_2)
+    # conv_4 = Conv2D(128, (3, 3), activation='relu')(conv_3)
+    # max_pool_2 = MaxPooling2D(pool_size=(2, 2))(conv_4)
+    # dropout_2 = Dropout(0.25)(max_pool_2)
 
-    conv_5 = Conv2D(128, (3, 3), padding='same', activation='relu', kernel_regularizer=l2(0.001))(
-        dropout_2
-    )
+    # conv_5 = Conv2D(128, (3, 3), padding='same', activation='relu', kernel_regularizer=l2(0.001))(
+    #     dropout_2
+    # )
 
-    conv_6 = Conv2D(128, (3, 3), activation='relu')(conv_5)
+    conv_6 = Conv2D(128, (3, 3), activation='relu')(conv_3)
     max_pool_3 = MaxPooling2D(pool_size=(2, 2))(conv_6)
     dropout_3 = Dropout(0.25)(max_pool_3)
 
