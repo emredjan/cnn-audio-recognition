@@ -79,6 +79,9 @@ def main(sample):
 
     model = mt.build_model(num_classes, input_shape)
 
+    model_image_dir = Path(pr['locations']['model_image_dir'])
+    model_image_dir.mkdir(exist_ok=True, parents=True)
+
     model_plot_file_name = Path(pr['locations']['model_image_dir']) / f'model_{run_id}.png'
     plot_model(model, to_file=str(model_plot_file_name), show_shapes=True)
 
