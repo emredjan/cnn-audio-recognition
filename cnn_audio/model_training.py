@@ -73,15 +73,15 @@ def build_model(
         dropout_1
     )
 
-    # conv_4 = Conv2D(128, (3, 3), activation='relu')(conv_3)
-    # max_pool_2 = MaxPooling2D(pool_size=(2, 2))(conv_4)
-    # dropout_2 = Dropout(0.25)(max_pool_2)
+    conv_4 = Conv2D(128, (3, 3), activation='relu')(conv_3)
+    max_pool_2 = MaxPooling2D(pool_size=(2, 2))(conv_4)
+    dropout_2 = Dropout(0.25)(max_pool_2)
 
-    # conv_5 = Conv2D(128, (3, 3), padding='same', activation='relu', kernel_regularizer=l2(0.001))(
-    #     dropout_2
-    # )
+    conv_5 = Conv2D(128, (3, 3), padding='same', activation='relu', kernel_regularizer=l2(0.001))(
+        dropout_2
+    )
 
-    conv_6 = Conv2D(128, (3, 3), activation='relu')(conv_3)
+    conv_6 = Conv2D(128, (3, 3), activation='relu')(conv_5)
     max_pool_3 = MaxPooling2D(pool_size=(2, 2))(conv_6)
     dropout_3 = Dropout(0.25)(max_pool_3)
 
