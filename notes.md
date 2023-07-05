@@ -60,6 +60,9 @@ Install nvcc
 
 - `conda install -c nvidia cuda-nvcc`
 
+
+conda install -c conda-forge ncurses #(may need specific build)
+
 Copy lib
 
 ```sh
