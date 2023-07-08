@@ -129,7 +129,7 @@ def build_modelxxx(
     model = Model(inputs=input_layer, outputs=outputs)
 
     opt = Adam(learning_rate=1e-4, beta_1=1e-4 / pr['model']['epochs'])
-    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+    model.compile(loss=SparseCategoricalCrossentropy(), optimizer=opt, metrics=['accuracy'])
 
     return model
 
