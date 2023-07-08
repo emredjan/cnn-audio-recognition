@@ -77,7 +77,7 @@ def main(sample):
     data_shape_path = features_dir / 'data_shape.joblib'
     input_shape: tuple[int, ...] = joblib.load(data_shape_path)
 
-    model = mt.build_model(num_classes, input_shape)
+    model = mt.build_model_2(num_classes, input_shape)
 
     model_image_dir = Path(pr['locations']['model_image_dir'])
     model_image_dir.mkdir(exist_ok=True, parents=True)

@@ -98,7 +98,7 @@ def build_model(
     return model
 
 
-def build_modelxxx(
+def build_model_1(
     num_classes: int,
     input_shape:tuple[int, ...],
 ):
@@ -133,6 +133,37 @@ def build_modelxxx(
 
     return model
 
+
+
+def build_model_2(
+    num_classes: int,
+    input_shape:tuple[int, ...],
+):
+
+    input_layer = Input(shape=input_shape)
+
+    # Add convolutional layers
+    x = Conv2D(32, (3, 3), activation='relu')(input_layer)
+    x = MaxPooling2D((2, 2))(x)
+    x = Conv2D(64, (3, 3), activation='relu')(x)
+    x = MaxPooling2D((2, 2))(x)
+
+    # Flatten the output and add dense layers
+    x = Flatten()(x)
+    x = Dense(64, activation='relu')(x)
+
+    # Output layer
+    outputs = Dense(num_classes, activation='softmax')(x)
+
+    # Create the model
+    model = Model(inputs=input_layer, outputs=outputs)
+
+    # Compile the model
+    model.compile(optimizer='adam',
+                loss=SparseCategoricalCrossentropy(),
+                metrics=['accuracy'])
+
+    return model
 
 
 def prepare_training(run_id):
