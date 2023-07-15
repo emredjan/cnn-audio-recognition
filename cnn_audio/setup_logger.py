@@ -3,12 +3,13 @@ from loguru import logger
 import sys
 from cnn_audio.params import pr
 
-def get_logger():
+def get_logger(phase: str):
 
     logger.remove()
     log_format = (
         "<white>{time:YYYY-MM-DD HH:mm:ss.SSS}</white> | "
         "<level>{level:<9}</level> | "
+        f"<cyan>{phase:<15}</cyan> | "
         "<level>{message}</level>"
     )
 

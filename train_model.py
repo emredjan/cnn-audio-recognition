@@ -25,7 +25,7 @@ NSYNTH_METADATA_FILE_NAME: str = pr['locations']['nsynth_metadata_file_name']
 @click.option('-s', '--sample', is_flag=True, help="Run only for the sample dataset.")
 def main(sample):
 
-    logger = get_logger()
+    logger = get_logger(phase='TRAINING')
 
     features_dir_base: str = pr['locations']['features_base_dir']
 
@@ -77,7 +77,7 @@ def main(sample):
     data_shape_path = features_dir / 'data_shape.joblib'
     input_shape: tuple[int, ...] = joblib.load(data_shape_path)
 
-    model = mt.build_model(num_classes, input_shape)
+    model = mt.build_model_1(num_classes, input_shape)
 
     model_image_dir = Path(pr['locations']['model_image_dir'])
     model_image_dir.mkdir(exist_ok=True, parents=True)

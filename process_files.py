@@ -23,7 +23,7 @@ warnings.filterwarnings(action='ignore', category=UserWarning)
 @click.option('-e', '--export-encoder', is_flag=True)
 def main(max_files: int | None, export_joblib: bool, export_tfrecord: bool, export_encoder: bool):
 
-    logger = get_logger()
+    logger = get_logger(phase='PREPROCESSING')
 
     output_dir_base: str = pr['locations']['features_base_dir']
 

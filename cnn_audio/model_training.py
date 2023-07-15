@@ -34,8 +34,8 @@ from cnn_audio.params import pr
 def parse_tfrecord(example_proto):
 
     # TODO: find a way to get these dynamically (and efficiently!) for the parsing function
-    data_shape: tuple[int, ...] = (50, 94, 2)
-    value_count = 9400  # data_shape[0] * data_shape[1] * data_shape[2]
+    data_shape: tuple[int, ...] = (50, 94, 1)
+    value_count = 4700  # data_shape[0] * data_shape[1] * data_shape[2]
 
     feature_description = {
         'input': tf.io.FixedLenFeature([value_count], tf.float32),
@@ -105,35 +105,24 @@ def build_model_1(
 
     input_layer = Input(shape=input_shape)
 
-    x = Conv2D(32, kernel_size=(3, 3), activation="relu", padding="same")(input_layer)
-    x = MaxPooling2D(pool_size=(2, 2))(x)
-    x = Dropout(0.25)(x)
+    # First convolutional layer
+    conv1 = Conv2D(32, (3, 3), activation='relu')(input_layer)
+    pool1 = MaxPooling2D((2, 2))(conv1)
 
-    x = Conv2D(64, kernel_size=(3, 3), activation="relu", padding="same")(x)
-    x = MaxPooling2D(pool_size=(2, 2))(x)
-    x = Dropout(0.25)(x)
+    # Second convolutional layer
+    conv2 = Conv2D(64, (3, 3), activation='relu')(pool1)
+    pool2 = MaxPooling2D((2, 2))(conv2)
 
-    x = Conv2D(128, kernel_size=(3, 3), activation="relu", padding="same")(x)
-    x = MaxPooling2D(pool_size=(2, 2))(x)
-    x = Dropout(0.25)(x)
+    # Flatten the output of the convolutional layers
+    flattened = Flatten()(pool2)
 
-    x = Conv2D(256, kernel_size=(3, 3), activation="relu", padding="same")(x)
-    x = MaxPooling2D(pool_size=(2, 2))(x)
-    x = Dropout(0.25)(x)
+    # Fully connected layer
+    output = Dense(num_classes, activation='softmax')(flattened)
 
-    x = Flatten()(x)
-    x = Dense(256, activation="relu")(x)
-    x = Dropout(0.5)(x)
-    outputs = Dense(num_classes, activation="softmax")(x)
-
-    model = Model(inputs=input_layer, outputs=outputs)
-
-    opt = Adam(learning_rate=1e-4, beta_1=1e-4 / pr['model']['epochs'])
-    model.compile(loss=SparseCategoricalCrossentropy(), optimizer=opt, metrics=['accuracy'])
+    model = Model(input_layer, output)
+    model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
     return model
-
-
 
 def build_model_2(
     num_classes: int,
