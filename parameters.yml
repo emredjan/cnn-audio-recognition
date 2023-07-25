@@ -21,11 +21,11 @@ librosa:
   hop_length: 512
 model:
   features:
-    - chroma_stft
-    - mfcc_stft
+    - chroma
+    - mfcc
   targets:
-    # - instrument_family_str
     - pitch
+    # - instrument_family_str
   epochs: 200
   batch_size: 128
   early_stop: 50

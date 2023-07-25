@@ -52,29 +52,29 @@ def extract_features(
 
     features = {}
     stft = None
-    chroma_stft = None
-    mfcc_stft = None
+    chroma = None
     mfcc = None
+    mfcc_ns = None
 
-    if ('chroma_stft' in calculate) or ('mfcc_stft' in calculate):
+    if ('chroma' in calculate) or ('mfcc' in calculate):
         stft = np.abs(librosa.stft(audio_data, hop_length=hop_length))
 
 
-    if 'chroma_stft' in calculate:
-        chroma_stft = librosa.feature.chroma_stft(
+    if 'chroma' in calculate:
+        chroma = librosa.feature.chroma_stft(
             S=stft, sr=sr, n_chroma=window_size, hop_length=hop_length
         )
-        features['chroma_stft'] = chroma_stft
-
-    if 'mfcc_stft' in calculate:
-        mfcc_stft = librosa.feature.mfcc(
-            y=audio_data, S=stft, sr=sr, n_mfcc=window_size, hop_length=hop_length
-        )
-        features['mfcc_stft'] = mfcc_stft
+        features['chroma'] = chroma
 
     if 'mfcc' in calculate:
-        mfcc = librosa.feature.mfcc(y=audio_data, sr=sr, n_mfcc=window_size, hop_length=hop_length)
+        mfcc = librosa.feature.mfcc(
+            y=audio_data, S=stft, sr=sr, n_mfcc=window_size, hop_length=hop_length
+        )
         features['mfcc'] = mfcc
+
+    if 'mfcc' in calculate:
+        mfcc_ns = librosa.feature.mfcc(y=audio_data, sr=sr, n_mfcc=window_size, hop_length=hop_length)
+        features['mfcc_ns'] = mfcc_ns
 
     return features
 

@@ -47,7 +47,10 @@ def main(max_files: int | None, export_joblib: bool, export_tfrecord: bool, expo
     calculate_features = pr['model']['features']
     targets = pr['model']['targets']
 
-    labels_file_stem = 'label_encoder'
+    feature_affix = '-'.join(['f'] + calculate_features)
+    targets_affix = '-'.join(['t'] + targets)
+
+    labels_file_stem = f'labels_{targets_affix}'
     labels_file = None
 
     if export_joblib:
@@ -107,8 +110,7 @@ def main(max_files: int | None, export_joblib: bool, export_tfrecord: bool, expo
 
             logger.debug(f"Started processing TFRecord file for {partition_labels[partition]} data")
 
-            feature_affix = '_'.join(calculate_features)
-            tf_record_file = output_dir / f'{partition}_{feature_affix}.tfrecord'
+            tf_record_file = output_dir / f'{partition}_{feature_affix}_{targets_affix}.tfrecord'
 
             data_files = [output_dir / f"{partition}_{feature}.joblib" for feature in calculate_features]
             names_file = output_dir / f"{partition}_name.joblib"
@@ -135,7 +137,7 @@ def main(max_files: int | None, export_joblib: bool, export_tfrecord: bool, expo
 
             logger.debug(f"Started writing TFRecord file for {partition_labels[partition]} data")
             data_shape = ap.write_tfrecord(data, label_enc, tf_record_file, calculate_features)
-            _ = ap.dump_to_file(data_shape, 'data_shape', output_dir)
+            _ = ap.dump_to_file(data_shape, f'data_shape_{feature_affix}', output_dir)
             logger.info(f"Written TFRecord file for {partition_labels[partition]} data as: {tf_record_file}")
 
             if not tf_record_file.exists():

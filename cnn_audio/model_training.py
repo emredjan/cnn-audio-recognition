@@ -30,13 +30,16 @@ from sklearn.preprocessing import LabelEncoder
 
 from cnn_audio.params import pr
 
+AUDIO_FEATURES = pr['model']['features']
+DATA_SHAPE = (50, 94, len(AUDIO_FEATURES))
+VALUE_COUNT = 50 * 94 * len(AUDIO_FEATURES)
 
 
 def parse_tfrecord(example_proto):
 
     # TODO: find a way to get these dynamically (and efficiently!) for the parsing function
-    data_shape: tuple[int, ...] = (50, 94, 1)
-    value_count = 4700  # data_shape[0] * data_shape[1] * data_shape[2]
+    data_shape: tuple[int, ...] = DATA_SHAPE  # (50, 94, 1)
+    value_count = VALUE_COUNT  # 4700  # data_shape[0] * data_shape[1] * data_shape[2]
 
     feature_description = {
         'input': tf.io.FixedLenFeature([value_count], tf.float32),

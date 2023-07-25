@@ -32,7 +32,10 @@ def main(sample):
     dir_label = 'SAMPLE' if sample else 'FULL'
     features_dir = Path(features_dir_base.replace('||TYPE||', dir_label))
 
-    labels_file = features_dir / 'label_encoder.joblib'
+    targets = pr['model']['targets']
+    targets_affix = '-'.join(['t'] + targets)
+
+    labels_file = features_dir / f'labels_{targets_affix}.joblib'
 
     run_id: str = pendulum.now().format('YYYYMMDD_HHmmss')
 
@@ -56,14 +59,14 @@ def main(sample):
     partitions.remove('test')
 
     audio_features = pr['model']['features']
-    feature_affix = '_'.join(audio_features)
+    feature_affix = '-'.join(['f'] + audio_features)
 
     datasets = {}
     batch_size=pr['model']['batch_size']
 
     for p in partitions:
 
-        data_path = features_dir / f'{p}_{feature_affix}.tfrecord'
+        data_path = features_dir / f'{p}_{feature_affix}_{targets_affix}.tfrecord'
         names_path = features_dir / f'{p}_name.joblib'
 
         num_samples = joblib.load(names_path).shape[0]
@@ -77,7 +80,7 @@ def main(sample):
 
     num_classes: int = len(encoder.classes_)
 
-    data_shape_path = features_dir / 'data_shape.joblib'
+    data_shape_path = features_dir / f'data_shape_{feature_affix}.joblib'
     input_shape: tuple[int, ...] = joblib.load(data_shape_path)
 
     model, model_description = mt.build_model_1(num_classes, input_shape)
