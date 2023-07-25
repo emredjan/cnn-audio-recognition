@@ -22,8 +22,7 @@ from keras.layers import (
 )
 from keras.losses import CategoricalCrossentropy, SparseCategoricalCrossentropy
 from keras.models import Model, Sequential
-from keras.optimizers import Adam, RMSprop
-from tensorflow.keras.optimizers.experimental import AdamW  # type: ignore
+from keras.optimizers import Adam, RMSprop, SGD, Nadam, Adagrad
 from keras.regularizers import l2
 from keras.utils import normalize, plot_model, to_categorical
 from sklearn.preprocessing import LabelEncoder
@@ -77,15 +76,15 @@ def build_model_0(
         dropout_1
     )
 
-    # conv_4 = Conv2D(128, (3, 3), activation='relu')(conv_3)
-    # max_pool_2 = MaxPooling2D(pool_size=(2, 2))(conv_4)
-    # dropout_2 = Dropout(0.25)(max_pool_2)
+    conv_4 = Conv2D(128, (3, 3), activation='relu')(conv_3)
+    max_pool_2 = MaxPooling2D(pool_size=(2, 2))(conv_4)
+    dropout_2 = Dropout(0.25)(max_pool_2)
 
-    # conv_5 = Conv2D(128, (3, 3), padding='same', activation='relu', kernel_regularizer=l2(0.001))(
-    #     dropout_2
-    # )
+    conv_5 = Conv2D(128, (3, 3), padding='same', activation='relu', kernel_regularizer=l2(0.001))(
+        dropout_2
+    )
 
-    conv_6 = Conv2D(128, (3, 3), activation='relu')(conv_3)
+    conv_6 = Conv2D(128, (3, 3), activation='relu')(conv_5)
     max_pool_3 = MaxPooling2D(pool_size=(2, 2))(conv_6)
     dropout_3 = Dropout(0.25)(max_pool_3)
 
@@ -96,7 +95,8 @@ def build_model_0(
 
     model = Model(inputs=input_layer, outputs=output_layer)
 
-    opt = AdamW(learning_rate=1e-4, epsilon=1e-1 / pr['model']['epochs'])
+    # opt = AdamW(learning_rate=1e-4, epsilon=1e-1 / pr['model']['epochs'])
+    opt = Adagrad(learning_rate=0.05, epsilon=1e-7)
     model.compile(loss=SparseCategoricalCrossentropy(), optimizer=opt, metrics=['accuracy'])
 
     description = 'base model'

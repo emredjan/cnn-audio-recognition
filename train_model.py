@@ -83,7 +83,7 @@ def main(sample):
     data_shape_path = features_dir / f'data_shape_{feature_affix}.joblib'
     input_shape: tuple[int, ...] = joblib.load(data_shape_path)
 
-    model, model_description = mt.build_model_1(num_classes, input_shape)
+    model, model_description = mt.build_model_0(num_classes, input_shape)
     logger.info(f"Using {model_description} for training")
 
     model_image_dir = Path(pr['locations']['model_image_dir'])
