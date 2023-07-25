@@ -7,7 +7,7 @@ import pandas as pd
 import tensorflow as tf
 
 from tensorflow import keras
-from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
+from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, LearningRateScheduler
 from keras.layers import (
     Activation,
     Concatenate,
@@ -77,15 +77,15 @@ def build_model_0(
         dropout_1
     )
 
-    conv_4 = Conv2D(128, (3, 3), activation='relu')(conv_3)
-    max_pool_2 = MaxPooling2D(pool_size=(2, 2))(conv_4)
-    dropout_2 = Dropout(0.25)(max_pool_2)
+    # conv_4 = Conv2D(128, (3, 3), activation='relu')(conv_3)
+    # max_pool_2 = MaxPooling2D(pool_size=(2, 2))(conv_4)
+    # dropout_2 = Dropout(0.25)(max_pool_2)
 
-    conv_5 = Conv2D(128, (3, 3), padding='same', activation='relu', kernel_regularizer=l2(0.001))(
-        dropout_2
-    )
+    # conv_5 = Conv2D(128, (3, 3), padding='same', activation='relu', kernel_regularizer=l2(0.001))(
+    #     dropout_2
+    # )
 
-    conv_6 = Conv2D(128, (3, 3), activation='relu')(conv_5)
+    conv_6 = Conv2D(128, (3, 3), activation='relu')(conv_3)
     max_pool_3 = MaxPooling2D(pool_size=(2, 2))(conv_6)
     dropout_3 = Dropout(0.25)(max_pool_3)
 
@@ -96,7 +96,7 @@ def build_model_0(
 
     model = Model(inputs=input_layer, outputs=output_layer)
 
-    opt = AdamW(learning_rate=1e-4, epsilon=1 / pr['model']['epochs'])
+    opt = AdamW(learning_rate=1e-4, epsilon=1e-1 / pr['model']['epochs'])
     model.compile(loss=SparseCategoricalCrossentropy(), optimizer=opt, metrics=['accuracy'])
 
     description = 'base model'
@@ -178,21 +178,29 @@ def build_model_2(
 
 
 def prepare_training(run_id):
+
+    def scheduler(epoch, lr):
+        if epoch < 5:
+            return lr
+        else:
+            return lr * tf.math.exp(-0.1)
+
     weights_dir = Path(pr['locations']['weights_base_dir']) / run_id
     weights_dir.mkdir(parents=True, exist_ok=True)
 
     weights_file = str(weights_dir) + '/' + pr['model']['weight_file_pattern']
     checkpoint = ModelCheckpoint(weights_file, save_best_only=True)
 
+    lr_scheduler = LearningRateScheduler(scheduler)
     earlystopping = EarlyStopping(patience=pr['model']['early_stop'])
 
     log_dir = Path(pr['locations']['log_base_dir']) / run_id
 
     tensorboard = TensorBoard(log_dir=str(log_dir), update_freq=50)  # type: ignore
 
-    callbacks_list = [checkpoint, earlystopping, tensorboard]
+    callbacks = [checkpoint, earlystopping, tensorboard, lr_scheduler]
 
-    return callbacks_list
+    return callbacks
 
 
 def train_model(
