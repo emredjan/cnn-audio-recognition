@@ -107,7 +107,8 @@ def main(max_files: int | None, export_joblib: bool, export_tfrecord: bool, expo
 
             logger.debug(f"Started processing TFRecord file for {partition_labels[partition]} data")
 
-            tf_record_file = output_dir / f'{partition}.tfrecord'
+            feature_affix = '_'.join(calculate_features)
+            tf_record_file = output_dir / f'{partition}_{feature_affix}.tfrecord'
 
             data_files = [output_dir / f"{partition}_{feature}.joblib" for feature in calculate_features]
             names_file = output_dir / f"{partition}_name.joblib"

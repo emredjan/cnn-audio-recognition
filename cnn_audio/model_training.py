@@ -23,6 +23,7 @@ from keras.layers import (
 from keras.losses import CategoricalCrossentropy, SparseCategoricalCrossentropy
 from keras.models import Model, Sequential
 from keras.optimizers import Adam, RMSprop
+from tensorflow.keras.optimizers.experimental import AdamW  # type: ignore
 from keras.regularizers import l2
 from keras.utils import normalize, plot_model, to_categorical
 from sklearn.preprocessing import LabelEncoder
@@ -51,9 +52,9 @@ def parse_tfrecord(example_proto):
 
     return input_feature, label_feature
 
-def build_model(
+def build_model_0(
     num_classes: int,
-    input_shape:tuple[int, ...],
+    input_shape: tuple[int, ...],
 ):
     input_layer = Input(shape=input_shape)
 
@@ -92,41 +93,57 @@ def build_model(
 
     model = Model(inputs=input_layer, outputs=output_layer)
 
-    opt = Adam(learning_rate=1e-4, beta_1=1e-4 / pr['model']['epochs'])
+    opt = AdamW(learning_rate=1e-4, epsilon=1 / pr['model']['epochs'])
     model.compile(loss=SparseCategoricalCrossentropy(), optimizer=opt, metrics=['accuracy'])
 
-    return model
+    description = 'base model'
+
+    return model, description
 
 
 def build_model_1(
     num_classes: int,
-    input_shape:tuple[int, ...],
+    input_shape: tuple[int, ...],
 ):
 
     input_layer = Input(shape=input_shape)
 
     # First convolutional layer
-    conv1 = Conv2D(32, (3, 3), activation='relu')(input_layer)
+    conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(input_layer)
     pool1 = MaxPooling2D((2, 2))(conv1)
 
     # Second convolutional layer
-    conv2 = Conv2D(64, (3, 3), activation='relu')(pool1)
+    conv2 = Conv2D(64, (3, 3), activation='relu', padding='same')(pool1)
     pool2 = MaxPooling2D((2, 2))(conv2)
 
+    # Third convolutional layer
+    conv3 = Conv2D(128, (3, 3), activation='relu', padding='same')(pool2)
+    pool3 = MaxPooling2D((2, 2))(conv3)
+
+    # Fourth convolutional layer
+    conv4 = Conv2D(256, (3, 3), activation='relu', padding='same')(pool3)
+    # Change the kernel size to (2, 2) to avoid the error
+    pool4 = MaxPooling2D((2, 2), padding='same')(conv4)
+
     # Flatten the output of the convolutional layers
-    flattened = Flatten()(pool2)
+    flattened = Flatten()(pool4)
+
+    # Dropout layer
+    dropout1 = Dropout(0.2)(flattened)
 
     # Fully connected layer
-    output = Dense(num_classes, activation='softmax')(flattened)
+    output = Dense(num_classes, activation='softmax')(dropout1)
 
     model = Model(input_layer, output)
     model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-    return model
+    description = 'bard provided model'
+
+    return model, description
 
 def build_model_2(
     num_classes: int,
-    input_shape:tuple[int, ...],
+    input_shape: tuple[int, ...],
 ):
 
     input_layer = Input(shape=input_shape)
@@ -152,7 +169,9 @@ def build_model_2(
                 loss=SparseCategoricalCrossentropy(),
                 metrics=['accuracy'])
 
-    return model
+    description = 'simple model'
+
+    return model, description
 
 
 def prepare_training(run_id):

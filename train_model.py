@@ -55,12 +55,15 @@ def main(sample):
     partitions = list(partition_labels.keys())
     partitions.remove('test')
 
+    audio_features = pr['model']['features']
+    feature_affix = '_'.join(audio_features)
+
     datasets = {}
     batch_size=pr['model']['batch_size']
 
     for p in partitions:
 
-        data_path = features_dir / f'{p}.tfrecord'
+        data_path = features_dir / f'{p}_{feature_affix}.tfrecord'
         names_path = features_dir / f'{p}_name.joblib'
 
         num_samples = joblib.load(names_path).shape[0]
@@ -77,7 +80,8 @@ def main(sample):
     data_shape_path = features_dir / 'data_shape.joblib'
     input_shape: tuple[int, ...] = joblib.load(data_shape_path)
 
-    model = mt.build_model_1(num_classes, input_shape)
+    model, model_description = mt.build_model_1(num_classes, input_shape)
+    logger.info(f"Using {model_description} for training")
 
     model_image_dir = Path(pr['locations']['model_image_dir'])
     model_image_dir.mkdir(exist_ok=True, parents=True)
