@@ -28,5 +28,5 @@ model:
     # - instrument_family_str
   epochs: 200
   batch_size: 128
-  early_stop: 50
+  early_stop: 7
   weight_file_pattern: weights_epoch-{epoch:02d}_acc-{val_accuracy:.2f}_loss-{val_loss:.4f}.hdf5

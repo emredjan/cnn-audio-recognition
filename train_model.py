@@ -89,7 +89,7 @@ def main(sample):
     model_image_dir = Path(pr['locations']['model_image_dir'])
     model_image_dir.mkdir(exist_ok=True, parents=True)
 
-    model_plot_file_name = Path(pr['locations']['model_image_dir']) / f'model_{run_id}.png'
+    model_plot_file_name = model_image_dir / f'model_{run_id}_compiled.png'
     plot_model(model, to_file=str(model_plot_file_name), show_shapes=True)
 
     callbacks = mt.prepare_training(run_id)
@@ -102,6 +102,9 @@ def main(sample):
         batch_size=batch_size,
         callbacks=callbacks,
     )
+
+    model_plot_file_name = model_image_dir / f'model_{run_id}_train.png'
+    plot_model(model, to_file=str(model_plot_file_name), show_shapes=True)
 
     saved_model_file_name = Path(pr['locations']['saved_model_dir']) / f'model_{run_id}.keras'
     _ = mt.save_model(model, saved_model_file_name)
