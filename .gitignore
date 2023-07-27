@@ -116,6 +116,6 @@ dmypy.json
 temp/
 /model/
 logs/
-*.ipynb
+playground.ipynb
 desktop.ini
 *.old.*

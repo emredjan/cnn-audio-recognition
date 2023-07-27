@@ -25,6 +25,8 @@ NSYNTH_METADATA_FILE_NAME: str = pr['locations']['nsynth_metadata_file_name']
 @click.option('-s', '--sample', is_flag=True, help="Run only for the sample dataset.")
 def main(sample):
 
+    now = pendulum.now().format('YYYYMMDD_HHmmss')
+
     logger = get_logger(phase='TRAINING')
 
     features_dir_base: str = pr['locations']['features_base_dir']
@@ -36,8 +38,6 @@ def main(sample):
     targets_affix = '-'.join(['t'] + targets)
 
     labels_file = features_dir / f'labels_{targets_affix}.joblib'
-
-    run_id: str = pendulum.now().format('YYYYMMDD_HHmmss')
 
     devices = {dev.device_type: dev.physical_device_desc for dev in device_lib.list_local_devices()}  # type: ignore
 
@@ -64,6 +64,8 @@ def main(sample):
     datasets = {}
     batch_size=pr['model']['batch_size']
 
+    run_id: str = f"{now}_{feature_affix}_{targets_affix}"
+
     for p in partitions:
 
         data_path = features_dir / f'{p}_{feature_affix}_{targets_affix}.tfrecord'
@@ -89,7 +91,7 @@ def main(sample):
     model_image_dir = Path(pr['locations']['model_image_dir'])
     model_image_dir.mkdir(exist_ok=True, parents=True)
 
-    model_plot_file_name = model_image_dir / f'model_{run_id}_compiled.png'
+    model_plot_file_name = model_image_dir / f'model_{run_id}.png'
     plot_model(model, to_file=str(model_plot_file_name), show_shapes=True)
 
     callbacks = mt.prepare_training(run_id)
@@ -102,9 +104,6 @@ def main(sample):
         batch_size=batch_size,
         callbacks=callbacks,
     )
-
-    model_plot_file_name = model_image_dir / f'model_{run_id}_train.png'
-    plot_model(model, to_file=str(model_plot_file_name), show_shapes=True)
 
     saved_model_file_name = Path(pr['locations']['saved_model_dir']) / f'model_{run_id}.keras'
     _ = mt.save_model(model, saved_model_file_name)
