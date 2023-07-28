@@ -56,8 +56,9 @@ def extract_features(
     mfcc = None
     mfcc_ns = None
 
-    if ('chroma' in calculate) or ('mfcc' in calculate):
+    if ('chroma' in calculate) or ('mfcc' in calculate) or ('stft' in calculate):
         stft = np.abs(librosa.stft(audio_data, hop_length=hop_length))
+        features['stft'] = stft
 
 
     if 'chroma' in calculate:
@@ -72,7 +73,7 @@ def extract_features(
         )
         features['mfcc'] = mfcc
 
-    if 'mfcc' in calculate:
+    if 'mfcc_ns' in calculate:
         mfcc_ns = librosa.feature.mfcc(y=audio_data, sr=sr, n_mfcc=window_size, hop_length=hop_length)
         features['mfcc_ns'] = mfcc_ns
 
