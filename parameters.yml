@@ -21,7 +21,7 @@ librosa:
   hop_length: 512
 model:
   features:
-    - chroma
+    # - chroma
     - mfcc
   targets:
     # - pitch

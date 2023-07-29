@@ -83,7 +83,7 @@ def build_model_0(
     model = Model(inputs=input_layer, outputs=output_layer)
 
     # opt = AdamW(learning_rate=1e-4, epsilon=1e-1 / pr['model']['epochs'])
-    opt = Adagrad(learning_rate=0.05, epsilon=1e-7)
+    opt = Adagrad(learning_rate=0.01, epsilon=1e-7)
     model.compile(loss=SparseCategoricalCrossentropy(), optimizer=opt, metrics=['accuracy'])
 
     description = 'base model'
